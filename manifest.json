@@ -1,0 +1,36 @@
+{
+	"manifest_version": 2,
+
+	"name": "Getting started example",
+	"description": "This extension allows the user to change the background color of the current page.",
+	"version": "1.0",
+
+	"browser_action": {
+		"default_icon": "assets/icon.png",
+		"default_popup": "views/popup.html",
+		"default_title": "Click here!"
+	},
+	"permissions": [
+		"activeTab",
+		"storage",
+		"contextMenus"
+	],
+	"content_scripts": [
+		{
+			"matches": [
+				"https://www.reddit.com/r/RedditDevRewards/comments/*/register_your_public_stellar_key/*"
+			],
+			"js": ["js/jquery-3.2.1.min.js", "js/content.js", "js/allAccounts.js"]
+		},
+		{
+			"matches": [
+				"https://www.reddit.com/r/*/comments/*"
+			],
+			"js": ["js/jquery-3.2.1.min.js", "js/content.js", "js/micropayments.js", "js/stellar-sdk.min.js"]
+		}
+	],
+	"background": {
+		"scripts": ["js/background.js"],
+		"persistent": false
+	}
+}
