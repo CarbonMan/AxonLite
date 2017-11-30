@@ -18,7 +18,7 @@
 	"content_scripts": [
 		{
 			"matches": [
-				"https://www.reddit.com/r/RedditDevRewards/comments/*/register_your_public_stellar_key/*"
+				"https://www.reddit.com/r/AxonLite/comments/*/register_your_public_stellar_key/*"
 			],
 			"js": ["js/jquery-3.2.1.min.js", "js/content.js", "js/allAccounts.js"]
 		},
