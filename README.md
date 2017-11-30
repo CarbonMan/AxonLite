@@ -5,12 +5,17 @@ A Chrome extension for sending Lumens tips to site users
 Currently only works with Reddit though more implementations are on their way.
 
 ## Installation
-The first step is to download the extension from this repository page. 
-Click the “Clone or download” button (upper right on this screen) and then click “Download ZIP”
-![Download][https://www.thesslstore.com/blog/wp-content/uploads/2017/04/ChromeExtensionGitHub2.png]
-Take the downloaded ZIP file and extract it. We need to give it a permanent home because Chrome will externally load the files (if they get moved/deleted then the extension will stop working).
-With the extension downloaded and extracted, we can now install it. In Chrome, navigate to chrome://extensions
-Click the "Load unpacked extension..." button and select the directory holding the AxonLite extension.
+* The first step is to download the extension from this repository page. 
+
+* Click the “Clone or download” button (upper right on this screen) and then click “Download ZIP”
+
+![Download](https://www.thesslstore.com/blog/wp-content/uploads/2017/04/ChromeExtensionGitHub2.png "Download the zip")
+
+* Take the downloaded ZIP file and extract it. We need to give it a permanent home because Chrome will externally load the files (if they get moved/deleted then the extension will stop working).
+
+* With the extension downloaded and extracted, we can now install it. In Chrome, navigate to chrome://extensions
+
+* Click the "Load unpacked extension..." button and select the directory holding the AxonLite extension.
 
 ## Reddit
 Here's a couple of videos to get you going
