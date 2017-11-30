@@ -9,7 +9,7 @@ Currently only works with Reddit though more implementations are on their way.
 
 * Click the “Clone or download” button (upper right on this screen) and then click “Download ZIP”
 
-![Download](https://www.thesslstore.com/blog/wp-content/uploads/2017/04/ChromeExtensionGitHub2.png "Download the zip")
+![Download](https://rawgithub.com/CarbonMan/AxonLite/master/screen.png "Download the zip")
 
 * Take the downloaded ZIP file and extract it. We need to give it a permanent home because Chrome will externally load the files (if they get moved/deleted then the extension will stop working).
 
