@@ -6,9 +6,9 @@ Currently only works with Reddit though more are on their way.
 
 ## Reddit
 TL;DR
-There are 2 videos the 1st shows how to associate a Reddit user with a Stellar address. The second shows how to use it to make micro-payments to Reddit users. It is not pretty but it built that way so that it is safe for crypto, and that is the main point for now.
-[Register](https://www.youtube.com/watch?v=I6jkGNDOQvc&feature=youtu.be)
-[Use it](https://www.youtube.com/watch?v=67vFc9Kz5Fs&feature=youtu.be)
+[Register a Stellar address](https://www.youtube.com/watch?v=I6jkGNDOQvc&feature=youtu.be)
+
+[Give someone a tip](https://www.youtube.com/watch?v=67vFc9Kz5Fs&feature=youtu.be)
 
 **To register**
 First you need to join the sub /r/RedditDevRewards
