@@ -3,7 +3,7 @@
 
 	"name": "Axon lite",
 	"description": "This extension allows the use of Stellar Lumens in specific pages.",
-	"version": "1.0",
+	"version": "0.0.1",
 	/*
 	"browser_action": {
 		"default_icon": "assets/icon.png",
