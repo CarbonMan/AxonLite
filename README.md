@@ -21,6 +21,6 @@ Add a comment with your Stellar account public key
 ### To use it
 [Give someone a tip](https://www.youtube.com/watch?v=67vFc9Kz5Fs&feature=youtu.be)
 
-Go to any Reddit topic. Any user who has ** registered ** will show a "Lumens" option under their comment. Simply click it and send them some love.
+Go to any Reddit topic. Any user who has **registered** will show a "Lumens" option under their comment. Simply click it and send them some lumens.
 
 
