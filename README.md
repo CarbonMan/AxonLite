@@ -1,6 +1,6 @@
-# Stellar Tips
+# Axon Lite
 
-A Chrome extension for sending Lumens tips to site users
+A Chrome extension for sending Stellar Lumens to site users or owners.
 
 Currently only works with Reddit though more implementations are on their way.
 
