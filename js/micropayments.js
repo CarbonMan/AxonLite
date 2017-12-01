@@ -21,9 +21,12 @@
  */
 Axon.prototype.Stellar = function () {
 	this.showWarning = true;
+	// Send a payment to a user
 	this.sendPayment = function (receiver) {
 		var receiverPublicKey = receiver.key;
-		console.log("Axon.Stellar.SendPayment");
+		//console.log("Axon.Stellar.SendPayment");
+		// This is the secret key that should not be made public.
+		// Not a problem for an extension as this is running in a code sandbox.
 		var yourSecretKey = prompt("Enter your Stellar seed (empty=CANCEL): ", "your Stellar seed");
 		if (!yourSecretKey)
 			return;
@@ -34,22 +37,22 @@ Axon.prototype.Stellar = function () {
 		if (!confirm("Are you sure you wish to send " + amt + " lumens from\n" +
 				yourSecretKey + " to " + receiver.name + "?"))
 			return;
-
+			
+		// Generate the public address key from the seed.
 		var sourceKeypair = StellarSdk.Keypair.fromSecret(yourSecretKey);
 		var sourcePublicKey = sourceKeypair.publicKey();
 
 		// Configure StellarSdk to talk to the horizon instance hosted by Stellar.org
-		// To use the live network, set the hostname to 'horizon.stellar.org'
 		var horizon,
 		useNet;
-		//var server = new StellarSdk.Server(horizon);
-
-		// Uncomment the following line to build transactions for the live network. Be
-		// sure to also change the horizon hostname.
+		
+		// May see further network options if running with private networks.
 		if (axon.config.network === "public") {
+			// To use the live network, set the hostname to 'horizon.stellar.org'
 			horizon = 'https://horizon.stellar.org'
 				useNet = StellarSdk.Network.usePublicNetwork;
 		} else {
+			// To use the test network, set the hostname to 'horizon.stellar.org'
 			horizon = 'https://horizon-testnet.stellar.org'
 				useNet = StellarSdk.Network.useTestNetwork;
 		}
