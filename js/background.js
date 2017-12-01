@@ -1,4 +1,16 @@
 // background.js
+var _config;
+chrome.storage.local.get(null, function(config){
+	console.log("background storage", config);
+	_config = config || {};
+});
+
+chrome.runtime.onMessage.addListener(function(request, sender, callback) {
+    if (request.type == 'settings') {
+		var rsp = (_config ? _config[request.name]: null);
+        callback( rsp );
+    }
+});
 
 // Called when the user clicks on the browser action.
 /*
@@ -18,6 +30,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 // found in the LICENSE file.
 
 // The onClicked callback function.
+/*
 function onClickHandler(info, tab) {
   if (info.menuItemId == "radio1" || info.menuItemId == "radio2") {
     console.log("radio item " + info.menuItemId +
@@ -84,3 +97,4 @@ chrome.runtime.onInstalled.addListener(function() {
     }
   });
 });
+*/

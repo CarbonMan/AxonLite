@@ -1,4 +1,18 @@
-﻿function Axon() {}
+﻿function Axon() {
+	var me = this;
+	me.config = {
+		network: 'main'
+	};
+	// What network should be used for communications?
+	chrome.runtime.sendMessage({
+		type: 'settings',
+		name: 'network'
+	}, function(value) {
+		console.log("Stored network preference:", value);
+		if (value !== null)
+			me.config.network = value;
+	});
+}
 
 Axon.prototype.Stellar = function () {
 	this.showWarning = true;
@@ -20,13 +34,20 @@ Axon.prototype.Stellar = function () {
 
 		// Configure StellarSdk to talk to the horizon instance hosted by Stellar.org
 		// To use the live network, set the hostname to 'horizon.stellar.org'
-		var server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
+		var horizon, useNet;
+		//var server = new StellarSdk.Server(horizon);
 
 		// Uncomment the following line to build transactions for the live network. Be
 		// sure to also change the horizon hostname.
-		// StellarSdk.Network.usePublicNetwork();
-		StellarSdk.Network.useTestNetwork();
-
+		if (axon.config.network === "public"){
+			horizon = 'https://horizon.stellar.org'
+			useNet = StellarSdk.Network.usePublicNetwork;
+		}else{
+			horizon = 'https://horizon-testnet.stellar.org'
+			useNet = StellarSdk.Network.useTestNetwork;
+		}
+		var server = new StellarSdk.Server(horizon);
+		useNet();
 		// Transactions require a valid sequence number that is specific to this account.
 		// We can fetch the current sequence number for the source account from Horizon.
 		server.loadAccount(sourcePublicKey)
@@ -70,6 +91,7 @@ Axon.prototype.Stellar = function () {
 			});
 		})
 		.catch (function (e) {
+			debugger;
 			alert("Unable to connect with the destination account");
 			console.error(e);
 		});
