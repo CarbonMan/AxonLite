@@ -3,7 +3,7 @@
 Axon.prototype.Stellar = function () {
 	this.showWarning = true;
 	this.sendPayment = function (receiver) {
-		var receiverPublicKey = receiver.account;
+		var receiverPublicKey = receiver.key;
 		console.log("Axon.Stellar.SendPayment");
 		var yourSecretKey = prompt("Enter your Stellar seed (empty=CANCEL): ", "your Stellar seed");
 		if (!yourSecretKey)
