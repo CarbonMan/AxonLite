@@ -25,6 +25,12 @@
 		},
 		{
 			"matches": [
+				"https://www.reddit.com/r/AxonLite/comments/*/register_your_test_stellar_key/*"
+			],
+			"js": ["js/jquery-3.2.1.min.js", "js/content.js", "js/allAccounts.js"]
+		},
+		{
+			"matches": [
 				"https://www.reddit.com/r/*/comments/*"
 			],
 			"js": ["js/jquery-3.2.1.min.js", "js/content.js", "js/micropayments.js", "js/stellar-sdk.min.js"]

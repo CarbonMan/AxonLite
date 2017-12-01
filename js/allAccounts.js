@@ -12,7 +12,10 @@ function gatherAccounts(){
 			console.log( account.name, account.key );
 		}
 	});
-	localStorage.setItem("stellar_accounts",  JSON.stringify(accounts));
+	if (location.href.endsWith("register_your_test_stellar_key/"))
+		localStorage.setItem("test_stellar_accounts",  JSON.stringify(accounts));
+	else
+		localStorage.setItem("public_stellar_accounts",  JSON.stringify(accounts));
 	alert("Accounts registered");
 }
 

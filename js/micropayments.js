@@ -1,4 +1,4 @@
-﻿function Axon() {
+﻿function Axon(options) {
 	var me = this;
 	me.config = {
 		network: 'main'
@@ -7,13 +7,18 @@
 	chrome.runtime.sendMessage({
 		type: 'settings',
 		name: 'network'
-	}, function(value) {
+	}, function (value) {
 		console.log("Stored network preference:", value);
 		if (value !== null)
 			me.config.network = value;
+		if (options.done)
+			options.done();
 	});
 }
 
+/**
+ *  Payment control for the Stellar network
+ */
 Axon.prototype.Stellar = function () {
 	this.showWarning = true;
 	this.sendPayment = function (receiver) {
@@ -23,7 +28,8 @@ Axon.prototype.Stellar = function () {
 		if (!yourSecretKey)
 			return;
 		var amountStr = prompt("Enter the amount (you will be asked to confirm): ", "the amount");
-		if (!amountStr || amountStr == "0") return;
+		if (!amountStr || amountStr == "0")
+			return;
 		var amt = parseFloat(amountStr);
 		if (!confirm("Are you sure you wish to send " + amt + " lumens from\n" +
 				yourSecretKey + " to " + receiver.name + "?"))
@@ -34,17 +40,18 @@ Axon.prototype.Stellar = function () {
 
 		// Configure StellarSdk to talk to the horizon instance hosted by Stellar.org
 		// To use the live network, set the hostname to 'horizon.stellar.org'
-		var horizon, useNet;
+		var horizon,
+		useNet;
 		//var server = new StellarSdk.Server(horizon);
 
 		// Uncomment the following line to build transactions for the live network. Be
 		// sure to also change the horizon hostname.
-		if (axon.config.network === "public"){
+		if (axon.config.network === "public") {
 			horizon = 'https://horizon.stellar.org'
-			useNet = StellarSdk.Network.usePublicNetwork;
-		}else{
+				useNet = StellarSdk.Network.usePublicNetwork;
+		} else {
 			horizon = 'https://horizon-testnet.stellar.org'
-			useNet = StellarSdk.Network.useTestNetwork;
+				useNet = StellarSdk.Network.useTestNetwork;
 		}
 		var server = new StellarSdk.Server(horizon);
 		useNet();
@@ -161,42 +168,42 @@ Axon.prototype.Modal = function (prop) {
 		});
 		// Button styling
 		$('.axon_ok_button').css({
-			'background-color':'#44c767',
-			'-moz-border-radius':'28px',
-			'-webkit-border-radius':'28px',
-			'border-radius':'28px',
-			'border':'1px solid #18ab29',
-			'display':'inline-block',
-			'cursor':'pointer',
-			'color':'#ffffff',
-			'font-family':'Arial',
-			'font-size':'14px',
-			'padding':'7px 17px',
-			'text-decoration':'none',
-			'text-shadow':'0px 1px 0px #2f6627'
+			'background-color': '#44c767',
+			'-moz-border-radius': '28px',
+			'-webkit-border-radius': '28px',
+			'border-radius': '28px',
+			'border': '1px solid #18ab29',
+			'display': 'inline-block',
+			'cursor': 'pointer',
+			'color': '#ffffff',
+			'font-family': 'Arial',
+			'font-size': '14px',
+			'padding': '7px 17px',
+			'text-decoration': 'none',
+			'text-shadow': '0px 1px 0px #2f6627'
 		});
-		$('head').append('<style>'+
-			'.axon_ok_button:hover{background-color : #5cbf2a;}'+
-			'.axon_ok_button:active{position:relative;top:1px;}'+
+		$('head').append('<style>' +
+			'.axon_ok_button:hover{background-color : #5cbf2a;}' +
+			'.axon_ok_button:active{position:relative;top:1px;}' +
 			'</style>');
 		$('.axon_close_button').css({
-			'background-color':'#eb461d',
-			'-moz-border-radius':'28px',
-			'-webkit-border-radius':'28px',
-			'border-radius':'28px',
-			'border':'1px solid #330606',
-			'display':'inline-block',
-			'cursor':'pointer',
-			'color':'#ffffff',
-			'font-family':'Arial',
-			'font-size':'14px',
-			'padding':'7px 17px',
-			'text-decoration':'none',
-			'text-shadow':'0px 1px 0px #1a0303'
+			'background-color': '#eb461d',
+			'-moz-border-radius': '28px',
+			'-webkit-border-radius': '28px',
+			'border-radius': '28px',
+			'border': '1px solid #330606',
+			'display': 'inline-block',
+			'cursor': 'pointer',
+			'color': '#ffffff',
+			'font-family': 'Arial',
+			'font-size': '14px',
+			'padding': '7px 17px',
+			'text-decoration': 'none',
+			'text-shadow': '0px 1px 0px #1a0303'
 		});
-		$('head').append('<style>'+
-			'.axon_close_button:hover{background-color : #e01010;}'+
-			'.axon_close_button:active{position:relative;top:1px;}'+
+		$('head').append('<style>' +
+			'.axon_close_button:hover{background-color : #e01010;}' +
+			'.axon_close_button:active{position:relative;top:1px;}' +
 			'</style>');
 	}
 
@@ -207,18 +214,18 @@ Axon.prototype.Modal = function (prop) {
 	}
 
 	function add_popup_box() {
-		var pop_up = $('<div class="axon_modal_box">'+
-			'<div class="axon_inner_modal_box">'+
-			'<p style="font-size:14px;font-style:bold;text-align: center;color:red">' + options.title + '</p>'+
-			'<br/>'+
-			'<p style="font-size:12px;">' + options.description + '</p></div></div>');
+		var pop_up = $('<div class="axon_modal_box">' +
+				'<div class="axon_inner_modal_box">' +
+				'<p style="font-size:14px;font-style:bold;text-align: center;color:red">' + options.title + '</p>' +
+				'<br/>' +
+				'<p style="font-size:12px;">' + options.description + '</p></div></div>');
 		$(pop_up).appendTo('.axon_block_page');
 	}
-	
+
 	this.close = function () {
-			$('.axon_modal_box').fadeOut().remove();
-			$('.axon_block_page').fadeOut().remove();
-		};
+		$('.axon_modal_box').fadeOut().remove();
+		$('.axon_block_page').fadeOut().remove();
+	};
 
 	add_block_page();
 	add_popup_box();
@@ -227,57 +234,64 @@ Axon.prototype.Modal = function (prop) {
 	$('.axon_modal_box').fadeIn();
 };
 
-var axon = (typeof axon == "undefined" ? new Axon() : axon);
-axon.stellar = axon.stellar || new axon.Stellar();
-
-
-var accounts = [],
-accountStr = localStorage.getItem("stellar_accounts");
-console.log("micropayments.js loaded");
-if (accountStr) {
-	console.log("Account details found");
-	accounts = JSON.parse(accountStr);
-	console.dir(accounts);
-	$(".comment").each(function (i) {
-		var name = $(this).attr("data-author");
-		for (var i in accounts) {
-			if (accounts[i].name == name) {
-				((account) => {
-					// Lists can be nested only the first one is wanted.
-					var list = $(this).find(".flat-list.buttons:first");
-					// Get the url for this comment
-					var embed = list.find('.bylink:first');
-					var a = '<a data-inbound-url="' + embed.attr("data-inbound-url") + '">';
-					var giftButton = $('<li>' + a + 'Lumens</a></li>').click(function (event) {
-							event.preventDefault();
-							console.log("Give lumens");
-							var mB = new axon.Modal({
-									top: event.pageY-100,
-									title: 'Take security seriously',
-									description: "Send Lumens to " + name +
-									"<br/>You will now be prompted for your account private key<br/>" +
-									"<b>Nothing is stored on this computer or on our servers</b><br/>" +
-									"If you have concerns about the security of this computer<br/>" +
-									"before entering your private seed, open the debugger and look for the console message<br/>" +
-									"Axon.Stellar.SendPayment<br/>" +
-									"look at the code that generated that message. The variable <i>yourSecretKey</i> must not be stored<br/>" +
-									"<br/><br/>" +
-									"<button id='axonOK' class='axon_ok_button'>PROCEED</button>&nbsp;"+
-									"<button id='axonClose' class='axon_close_button'>CLOSE</button>",
-									height: '300',
-									width: '400'
+/**
+ *  Goes through the user interface and looks for account matches
+ */
+function readUserInterface() {
+	var accounts = [],
+	accLocation = (axon.config.network === "public" ? "public_stellar_accounts" : "test_stellar_accounts"),
+	accountStr = localStorage.getItem("stellar_accounts");
+	console.log("micropayments.js loaded");
+	if (accountStr) {
+		console.log("Account details found");
+		accounts = JSON.parse(accountStr);
+		console.dir(accounts);
+		$(".comment").each(function (i) {
+			var name = $(this).attr("data-author");
+			for (var i in accounts) {
+				if (accounts[i].name == name) {
+					((account) => {
+						// Lists can be nested only the first one is wanted.
+						var list = $(this).find(".flat-list.buttons:first");
+						// Get the url for this comment
+						var embed = list.find('.bylink:first');
+						var a = '<a data-inbound-url="' + embed.attr("data-inbound-url") + '">';
+						var giftButton = $('<li>' + a + 'Lumens</a></li>').click(function (event) {
+								event.preventDefault();
+								console.log("Give lumens");
+								var mB = new axon.Modal({
+										top: event.pageY - 100,
+										title: 'Take security seriously',
+										description: "Send Lumens to " + name +
+										"<br/>You will now be prompted for your account private key<br/>" +
+										"<b>Nothing is stored on this computer or on our servers</b><br/>" +
+										"If you have concerns about the security of this computer<br/>" +
+										"before entering your private seed, open the debugger and look for the console message<br/>" +
+										"Axon.Stellar.SendPayment<br/>" +
+										"look at the code that generated that message. The variable <i>yourSecretKey</i> must not be stored<br/>" +
+										"<br/><br/>" +
+										"<button id='axonOK' class='axon_ok_button'>PROCEED</button>&nbsp;" +
+										"<button id='axonClose' class='axon_close_button'>CLOSE</button>",
+										height: '300',
+										width: '400'
+									});
+								$("#axonClose").click(function () {
+									mB.close();
 								});
-							$("#axonClose").click(function(){
-								mB.close();
+								$("#axonOK").click(function () {
+									mB.close();
+									axon.stellar.sendPayment(account);
+								});
 							});
-							$("#axonOK").click(function(){
-								mB.close();
-								axon.stellar.sendPayment(account);
-							});
-						});
-					list.append(giftButton);
-				})(accounts[i]);
+						list.append(giftButton);
+					})(accounts[i]);
+				}
 			}
-		}
-	});
+		});
+	}
 }
+
+var axon = new Axon({
+		done: readUserInterface
+	});
+axon.stellar = axon.stellar || new axon.Stellar();
