@@ -37,7 +37,7 @@ Axon.prototype.Stellar = function () {
 		if (!confirm("Are you sure you wish to send " + amt + " lumens from\n" +
 				yourSecretKey + " to " + receiver.name + "?"))
 			return;
-			
+
 		// Generate the public address key from the seed.
 		var sourceKeypair = StellarSdk.Keypair.fromSecret(yourSecretKey);
 		var sourcePublicKey = sourceKeypair.publicKey();
@@ -45,19 +45,19 @@ Axon.prototype.Stellar = function () {
 		// Configure StellarSdk to talk to the horizon instance hosted by Stellar.org
 		var horizon,
 		useNet;
-		
+
 		// May see further network options if running with private networks.
 		if (axon.config.network === "public") {
 			// To use the live network, set the hostname to 'horizon.stellar.org'
-			horizon = 'https://horizon.stellar.org'
-				useNet = StellarSdk.Network.usePublicNetwork;
+			horizon = 'https://horizon.stellar.org';
+			useNet = StellarSdk.Network.usePublicNetwork;
 		} else {
 			// To use the test network, set the hostname to 'horizon.stellar.org'
-			horizon = 'https://horizon-testnet.stellar.org'
-				useNet = StellarSdk.Network.useTestNetwork;
+			horizon = 'https://horizon-testnet.stellar.org';
+			useNet = StellarSdk.Network.useTestNetwork;
 		}
 		var server = new StellarSdk.Server(horizon);
-		useNet();
+		useNet.call(StellarSdk.Network);
 		// Transactions require a valid sequence number that is specific to this account.
 		// We can fetch the current sequence number for the source account from Horizon.
 		server.loadAccount(sourcePublicKey)
@@ -260,7 +260,9 @@ function readUserInterface() {
 						var embed = list.find('.bylink:first');
 						var a = '<a data-inbound-url="' + embed.attr("data-inbound-url") + '">';
 						var giftButton = $('<li>' + a + 'Lumens</a></li>').click(function (event) {
+								var me = this;
 								event.preventDefault();
+								//$(this).closest(".flat-list.buttons").find(".reply-button.login-required a")
 								console.log("Give lumens");
 								var mB = new axon.Modal({
 										top: event.pageY - 100,
@@ -268,10 +270,7 @@ function readUserInterface() {
 										description: "Send Lumens to " + name +
 										"<br/>You will now be prompted for your account private key<br/>" +
 										"<b>Nothing is stored on this computer or on our servers</b><br/>" +
-										"If you have concerns about the security of this computer<br/>" +
-										"before entering your private seed, open the debugger and look for the console message<br/>" +
-										"Axon.Stellar.SendPayment<br/>" +
-										"look at the code that generated that message. The variable <i>yourSecretKey</i> must not be stored<br/>" +
+										"This application is protected against the page it runs within<br/>" +
 										"<br/><br/>" +
 										"<button id='axonOK' class='axon_ok_button'>PROCEED</button>&nbsp;" +
 										"<button id='axonClose' class='axon_close_button'>CLOSE</button>",
@@ -282,8 +281,11 @@ function readUserInterface() {
 									mB.close();
 								});
 								$("#axonOK").click(function () {
-									mB.close();
-									axon.stellar.sendPayment(account);
+									axon.sendTipFromLink({
+										element: me,
+										done: mB.close,
+										toAccount: account
+									});
 								});
 							});
 						list.append(giftButton);
@@ -292,6 +294,24 @@ function readUserInterface() {
 			}
 		});
 	}
+}
+
+/**
+ *  Send a tip from the Lumens hyperlink
+ */
+Axon.prototype.sendTipFromLink = function (options) {
+	var elm = options.element;
+	this.stellar.sendPayment(options.toAccount);
+	// Place a comment that a tip has been given. Have to find the reply button
+	var replyA = $(elm).siblings(".reply-button.login-required").find("a");
+	// jQuery replyA.click() didn't work.
+	replyA[0].click();
+	setTimeout(function () {
+		// A reply comment can be found by
+		var orgComment = $(elm).closest(".sitetable.nestedlisting");
+		orgComment.find(".child .usertext-edit.md-container textarea").text("You are Stellar! Have a tip");
+		if (options.done) options.done();
+	}, 500);
 }
 
 var axon = new Axon({
