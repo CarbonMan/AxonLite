@@ -1,5 +1,10 @@
 ﻿function Axon(options) {
 	var me = this;
+	this.enums = {
+		USER_CANCELLED: 0,
+		TRANSACTION_ERROR: 1,
+		DESTINATION_ACCOUNT_ERROR: 2
+	};
 	me.config = {
 		network: 'main'
 	};
@@ -16,97 +21,125 @@
 	});
 }
 
+Axon.prototype.PaymentError = function (options) {
+	if (typeof options == "number") {
+		this.type = options;
+		this.message = "";
+		this.contents = options.contents || {};
+	} else {
+		this.type = options.type;
+		this.message = options.message || "";
+		this.contents = options.contents || {};
+	}
+};
+
+Axon.prototype.PaymentError.prototype = new Error;
+
 /**
  *  Payment control for the Stellar network
  */
 Axon.prototype.Stellar = function () {
-	this.showWarning = true;
+	var me = this;
+	me.showWarning = true;
 	// Send a payment to a user
-	this.sendPayment = function (receiver) {
-		var receiverPublicKey = receiver.key;
-		//console.log("Axon.Stellar.SendPayment");
-		// This is the secret key that should not be made public.
-		// Not a problem for an extension as this is running in a code sandbox.
-		var yourSecretKey = prompt("Enter your Stellar seed (empty=CANCEL): ", "your Stellar seed");
-		if (!yourSecretKey)
-			return;
-		var amountStr = prompt("Enter the amount (you will be asked to confirm): ", "the amount");
-		if (!amountStr || amountStr == "0")
-			return;
-		var amt = parseFloat(amountStr);
-		if (!confirm("Are you sure you wish to send " + amt + " lumens from\n" +
-				yourSecretKey + " to " + receiver.name + "?"))
-			return;
+	me.sendPayment = function (receiver) {
+		var payStatus = new Promise(function (resolve, reject) {
+				var receiverPublicKey = receiver.key;
+				//console.log("Axon.Stellar.SendPayment");
+				// This is the secret key that should not be made public.
+				// Not a problem for an extension as this is running in a code sandbox.
+				var yourSecretKey = prompt("Enter your Stellar seed (empty=CANCEL): ", "your Stellar seed");
+				if (!yourSecretKey)
+					return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
 
-		// Generate the public address key from the seed.
-		var sourceKeypair = StellarSdk.Keypair.fromSecret(yourSecretKey);
-		var sourcePublicKey = sourceKeypair.publicKey();
+				var amountStr = prompt("Enter the amount (you will be asked to confirm): ", "the amount");
+				if (!amountStr || amountStr == "0")
+					return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
 
-		// Configure StellarSdk to talk to the horizon instance hosted by Stellar.org
-		var horizon,
-		useNet;
+				var amt = parseFloat(amountStr);
+				if (!confirm("Are you sure you wish to send " + amt + " lumens from\n" +
+						yourSecretKey + " to " + receiver.name + "?"))
+					return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
 
-		// May see further network options if running with private networks.
-		if (axon.config.network === "public") {
-			// To use the live network, set the hostname to 'horizon.stellar.org'
-			horizon = 'https://horizon.stellar.org';
-			useNet = StellarSdk.Network.usePublicNetwork;
-		} else {
-			// To use the test network, set the hostname to 'horizon.stellar.org'
-			horizon = 'https://horizon-testnet.stellar.org';
-			useNet = StellarSdk.Network.useTestNetwork;
-		}
-		var server = new StellarSdk.Server(horizon);
-		useNet.call(StellarSdk.Network);
-		// Transactions require a valid sequence number that is specific to this account.
-		// We can fetch the current sequence number for the source account from Horizon.
-		server.loadAccount(sourcePublicKey)
-		.then(function (account) {
-			var transaction = new StellarSdk.TransactionBuilder(account)
-				// Add a payment operation to the transaction
-				.addOperation(StellarSdk.Operation.payment({
-						destination: receiverPublicKey,
-						// The term native asset refers to lumens
-						asset: StellarSdk.Asset.native(),
-						// Specify 350.1234567 lumens. Lumens are divisible to seven digits past
-						// the decimal. They are represented in JS Stellar SDK in string format
-						// to avoid errors from the use of the JavaScript Number data structure.
-						amount: amountStr
-					}))
-				// Uncomment to add a memo (https://www.stellar.org/developers/learn/concepts/transactions.html)
-				//.addMemo(StellarSdk.Memo.text('Hello world!'))
-				.build();
+				// Generate the public address key from the seed.
+				var sourceKeypair = StellarSdk.Keypair.fromSecret(yourSecretKey);
+				var sourcePublicKey = sourceKeypair.publicKey();
 
-			// Sign this transaction with the secret key
-			// NOTE: signing is transaction is network specific. Test network transactions
-			// won't work in the public network. To switch networks, use the Network object
-			// as explained above (look for StellarSdk.Network).
-			transaction.sign(sourceKeypair);
+				// Configure StellarSdk to talk to the horizon instance hosted by Stellar.org
+				var horizon,
+				useNet;
 
-			// Let's see the XDR (encoded in base64) of the transaction we just built
-			console.log(transaction.toEnvelope().toXDR('base64'));
+				// May see further network options if running with private networks.
+				if (axon.config.network === "public") {
+					// To use the live network, set the hostname to 'horizon.stellar.org'
+					horizon = 'https://horizon.stellar.org';
+					useNet = StellarSdk.Network.usePublicNetwork;
+				} else {
+					// To use the test network, set the hostname to 'horizon.stellar.org'
+					horizon = 'https://horizon-testnet.stellar.org';
+					useNet = StellarSdk.Network.useTestNetwork;
+				}
+				var server = new StellarSdk.Server(horizon);
+				useNet.call(StellarSdk.Network);
+				// Transactions require a valid sequence number that is specific to this account.
+				// We can fetch the current sequence number for the source account from Horizon.
+				server.loadAccount(sourcePublicKey)
+				.then(function (account) {
+					var transaction = new StellarSdk.TransactionBuilder(account)
+						// Add a payment operation to the transaction
+						.addOperation(StellarSdk.Operation.payment({
+								destination: receiverPublicKey,
+								// The term native asset refers to lumens
+								asset: StellarSdk.Asset.native(),
+								// Specify 350.1234567 lumens. Lumens are divisible to seven digits past
+								// the decimal. They are represented in JS Stellar SDK in string format
+								// to avoid errors from the use of the JavaScript Number data structure.
+								amount: amountStr
+							}))
+						// Uncomment to add a memo (https://www.stellar.org/developers/learn/concepts/transactions.html)
+						.addMemo(StellarSdk.Memo.text('Reddit tip!'))
+						.build();
 
-			// Submit the transaction to the Horizon server. The Horizon server will then
-			// submit the transaction into the network for us.
-			server.submitTransaction(transaction)
-			.then(function (transactionResult) {
-				console.log(JSON.stringify(transactionResult, null, 2));
-				console.log('\nSuccess! View the transaction at: ');
-				console.log(transactionResult._links.transaction.href);
-			})
-			.catch (function (err) {
-				alert("An error occurred sending the transaction");
-				console.log('An error has occured:');
-				console.log(err);
+					// Sign this transaction with the secret key
+					// NOTE: signing is transaction is network specific. Test network transactions
+					// won't work in the public network. To switch networks, use the Network object
+					// as explained above (look for StellarSdk.Network).
+					transaction.sign(sourceKeypair);
+
+					// Let's see the XDR (encoded in base64) of the transaction we just built
+					console.log(transaction.toEnvelope().toXDR('base64'));
+
+					// Submit the transaction to the Horizon server. The Horizon server will then
+					// submit the transaction into the network for us.
+					server.submitTransaction(transaction)
+					.then(function (transactionResult) {
+						console.log(JSON.stringify(transactionResult, null, 2));
+						console.log('\nSuccess! View the transaction at: ');
+						console.log(transactionResult._links.transaction.href);
+						resolve();
+					})
+					.catch (function (e) {
+						console.log('An error has occured:');
+						console.log(e);
+						reject(new axon.PaymentError({
+								type: axon.enums.TRANSACTION_ERROR,
+								message: "An error occurred sending the transaction",
+								contents: e
+							}));
+					});
+				})
+				.catch (function (e) {
+					console.error(e);
+					reject(new axon.PaymentError({
+							type: axon.enums.DESTINATION_ACCOUNT_ERROR,
+							message: "Unable to connect with the destination account",
+							contents: e
+						}));
+				});
 			});
-		})
-		.catch (function (e) {
-			debugger;
-			alert("Unable to connect with the destination account");
-			console.error(e);
-		});
+		return payStatus;
 	};
-}
+};
 
 // Add the font awesome icons
 var head = document.getElementsByTagName('head')[0];
@@ -243,7 +276,7 @@ Axon.prototype.Modal = function (prop) {
 function readUserInterface() {
 	var accounts = [],
 	accLocation = (axon.config.network === "public" ? "public_stellar_accounts" : "test_stellar_accounts"),
-	accountStr = localStorage.getItem("stellar_accounts");
+	accountStr = localStorage.getItem(accLocation);
 	console.log("micropayments.js loaded");
 	if (accountStr) {
 		console.log("Account details found");
@@ -270,7 +303,7 @@ function readUserInterface() {
 										description: "Send Lumens to " + name +
 										"<br/>You will now be prompted for your account private key<br/>" +
 										"<b>Nothing is stored on this computer or on our servers</b><br/>" +
-										"This application is protected against the page it runs within<br/>" +
+										"This application is protected against the page it runs within a protected environment<br/>" +
 										"<br/><br/>" +
 										"<button id='axonOK' class='axon_ok_button'>PROCEED</button>&nbsp;" +
 										"<button id='axonClose' class='axon_close_button'>CLOSE</button>",
@@ -285,7 +318,10 @@ function readUserInterface() {
 										element: me,
 										done: mB.close,
 										toAccount: account
-									});
+									})
+									.then(mB.close)
+									.catch(mB.close);
+									
 								});
 							});
 						list.append(giftButton);
@@ -301,18 +337,30 @@ function readUserInterface() {
  */
 Axon.prototype.sendTipFromLink = function (options) {
 	var elm = options.element;
-	this.stellar.sendPayment(options.toAccount);
-	// Place a comment that a tip has been given. Have to find the reply button
-	var replyA = $(elm).siblings(".reply-button.login-required").find("a");
-	// jQuery replyA.click() didn't work.
-	replyA[0].click();
-	setTimeout(function () {
-		// A reply comment can be found by
-		var orgComment = $(elm).closest(".sitetable.nestedlisting");
-		orgComment.find(".child .usertext-edit.md-container textarea").text("You are Stellar! Have a tip");
-		if (options.done) options.done();
-	}, 500);
-}
+	return this.stellar.sendPayment(options.toAccount)
+	.then(function () {
+		// Place a comment that a tip has been given. Have to find the reply button
+		var replyA = $(elm).siblings(".reply-button.login-required").find("a");
+		// jQuery replyA.click() didn't work.
+		replyA[0].click();
+		setTimeout(function () {
+			// A reply comment can be found by
+			var orgComment = $(elm).closest(".sitetable.nestedlisting");
+			orgComment.find(".child .usertext-edit.md-container textarea")
+			.text("Take a tip from me. You are Stellar!\n\n"+
+			"----------------------------------------\n"+
+			"Via the *Axon Lite Stellar extension*\n\n"+
+			"[Github](https://github.com/CarbonMan/AxonLite)");
+		}, 500);
+	})
+	.catch (function (err) {
+		console.log(err);
+		if (err.type && err.type != axon.enums.USER_CANCELLED) {
+			if (err.message)
+				alert(err.message);
+			}
+		});
+};
 
 var axon = new Axon({
 		done: readUserInterface
