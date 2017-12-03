@@ -19,6 +19,11 @@
 		if (options.done)
 			options.done();
 	});
+	// Listen for Axon messages
+	chrome.runtime.onMessage.addListener(
+		function (request, sender, sendResponse) {
+		console.log('Received message', request);
+	});
 }
 
 Axon.prototype.PaymentError = function (options) {
@@ -321,8 +326,8 @@ function readUserInterface() {
 										toAccount: account
 									})
 									.then(mB.close)
-									.catch(mB.close);
-									
+									.catch (mB.close);
+
 								});
 							});
 						list.append(giftButton);
@@ -348,10 +353,10 @@ Axon.prototype.sendTipFromLink = function (options) {
 			// A reply comment can be found by
 			var orgComment = $(elm).closest(".sitetable.nestedlisting");
 			orgComment.find(".child .usertext-edit.md-container textarea")
-			.text("Take a tip from me. You are Stellar!\n\n"+
-			"----------------------------------------\n"+
-			"Via the *Axon Lite Stellar extension*\n\n"+
-			"[Github](https://github.com/CarbonMan/AxonLite)");
+			.text("Take a tip from me. You are Stellar!\n\n" +
+				"----------------------------------------\n" +
+				"Via the *Axon Lite Stellar extension*\n\n" +
+				"[Github](https://github.com/CarbonMan/AxonLite)");
 		}, 500);
 	})
 	.catch (function (err) {
