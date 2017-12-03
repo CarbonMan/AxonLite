@@ -276,6 +276,7 @@ Axon.prototype.Modal = function (prop) {
 function readUserInterface() {
 	var accounts = [],
 	accLocation = (axon.config.network === "public" ? "public_stellar_accounts" : "test_stellar_accounts"),
+	netTitle = (axon.config.network === "public" ? "Public Stellar" : "Test Stellar"),
 	accountStr = localStorage.getItem(accLocation);
 	console.log("micropayments.js loaded");
 	if (accountStr) {
@@ -299,7 +300,7 @@ function readUserInterface() {
 								console.log("Give lumens");
 								var mB = new axon.Modal({
 										top: event.pageY - 100,
-										title: 'Take security seriously',
+										title: 'Make a payment on the ' + netTitle + ' network',
 										description: "Send Lumens to " + name +
 										"<br/>You will now be prompted for your account private key<br/>" +
 										"<b>Nothing is stored on this computer or on our servers</b><br/>" +
