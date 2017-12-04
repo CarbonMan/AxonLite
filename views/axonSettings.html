@@ -3,20 +3,41 @@
   <head>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css" />
     <title>Axon Lite</title>
-    <!-- <script src="../js/jquery-3.2.1.min.js"></script> -->
+    <script src="../js/jquery-3.2.1.min.js"></script>
+	<script src="../js/semantic.min.js"></script>
     <script src="../js/axonPopup.js"></script>
+    <script src="../js/stellar-sdk.min.js"></script>
+	<style>
+		body{
+			margin: 1em;
+		}
+	</style>
   </head>
 
   <body>
-	<center>
     <h3>Axon Lite settings</h3>
-	<div class="ui buttons">
-	  <button id="testNetBtn" class="ui button">Test Net</button>
-	  <div class="or"></div>
-	  <button id="publicNetBtn" class="ui button">Public Net</button>
+	<div id="tabs" class="ui top attached tabular menu">
+	  <a class="active item" data-tab="settings">Accounts</a>
 	</div>
-	</center>
-	<br/>
+	<div class="ui bottom attached active tab segment" data-tab="settings">
+		<div class="ui buttons">
+		  <button id="testNetBtn" class="ui button">Test Net</button>
+		  <div class="or"></div>
+		  <button id="publicNetBtn" class="ui button">Public Net</button>
+		</div>
+		<hr/>
+		<h4>New account</h4>
+		<br/>
+		Between browser sessions account names will be remembered, but <b>private keys will be forgotten</b>.
+		<br/><br/>
+		<div class="ui icon input">
+			<label>Account Name</label>
+			<br/>
+			<input type="text" id="accountName" placeholder="Account Name">
+			<i class="tag icon"></i>
+		</div>
+		<button id='addBtn' class="ui small button" >ADD</button>
+	</div>	
 	<button id='closeBtn' class="ui button" >CLOSE</button>
   </body>
 </html>

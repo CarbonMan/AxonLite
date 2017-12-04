@@ -3,25 +3,28 @@
 	this.enums = {
 		USER_CANCELLED: 0,
 		TRANSACTION_ERROR: 1,
-		DESTINATION_ACCOUNT_ERROR: 2
+		DESTINATION_ACCOUNT_ERROR: 2,
+		INSUFFICIENT_FUNDS: 4
 	};
-	me.config = {
-		network: 'main'
-	};
-	// What network should be used for communications?
+	me.config = {};
+	
+	// What is the current configuration?
 	chrome.runtime.sendMessage({
-		type: 'settings',
-		name: 'network'
+		type: 'GetConfig'
 	}, function (value) {
 		console.log("Stored network preference:", value);
-		if (value !== null)
-			me.config.network = value;
+		me.config = value;
+//		if (value !== null)
+//			me.config.network = value;
 		if (options.done)
 			options.done();
 	});
+	
 	// Listen for Axon messages
 	chrome.runtime.onMessage.addListener(
 		function (request, sender, sendResponse) {
+		if (request.type == "config")
+			me.config = request.value;
 		console.log('Received message', request);
 	});
 }
@@ -46,7 +49,14 @@ Axon.prototype.PaymentError.prototype = new Error;
 Axon.prototype.Stellar = function () {
 	var me = this;
 	me.showWarning = true;
-	// Send a payment to a user
+	/**
+	 *  Base payment for the extension
+	 */
+	me.FIXED_BASIC_CHARGE = 0.1;
+
+	/**
+	 *  Send a payment to a user
+	 */
 	me.sendPayment = function (receiver) {
 		var payStatus = new Promise(function (resolve, reject) {
 				var receiverPublicKey = receiver.key;
@@ -61,7 +71,13 @@ Axon.prototype.Stellar = function () {
 				if (!amountStr || amountStr == "0")
 					return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
 
-				var amt = parseFloat(amountStr);
+				var amt = parseFloat(amountStr) - me.FIXED_BASIC_CHARGE;
+				if (amt <= 0){
+					return reject(new axon.PaymentError({
+						type: axon.enums.INSUFFICIENT_FUNDS,
+						message: "Insufficient funds to cover the basic charge"
+					}));
+				}
 				if (!confirm("Are you sure you wish to send " + amt + " lumens from\n" +
 						yourSecretKey + " to " + receiver.name + "?"))
 					return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
@@ -77,14 +93,14 @@ Axon.prototype.Stellar = function () {
 				// May see further network options if running with private networks.
 				if (axon.config.network === "public") {
 					// To use the live network, set the hostname to 'horizon.stellar.org'
-					horizon = 'https://horizon.stellar.org';
+					//horizon = 'https://horizon.stellar.org';
 					useNet = StellarSdk.Network.usePublicNetwork;
 				} else {
 					// To use the test network, set the hostname to 'horizon.stellar.org'
-					horizon = 'https://horizon-testnet.stellar.org';
+					//horizon = 'https://horizon-testnet.stellar.org';
 					useNet = StellarSdk.Network.useTestNetwork;
 				}
-				var server = new StellarSdk.Server(horizon);
+				var server = new StellarSdk.Server(axon.config.horizon);
 				useNet.call(StellarSdk.Network);
 				// Transactions require a valid sequence number that is specific to this account.
 				// We can fetch the current sequence number for the source account from Horizon.
@@ -94,12 +110,14 @@ Axon.prototype.Stellar = function () {
 						// Add a payment operation to the transaction
 						.addOperation(StellarSdk.Operation.payment({
 								destination: receiverPublicKey,
-								// The term native asset refers to lumens
 								asset: StellarSdk.Asset.native(),
-								// Specify 350.1234567 lumens. Lumens are divisible to seven digits past
-								// the decimal. They are represented in JS Stellar SDK in string format
-								// to avoid errors from the use of the JavaScript Number data structure.
-								amount: amountStr
+								amount: "" + amt
+							}))
+						// Base extension payment
+						.addOperation(StellarSdk.Operation.payment({
+								destination: axon.config.baseAccount,
+								asset: StellarSdk.Asset.native(),
+								amount: "0.1"
 							}))
 						// Uncomment to add a memo (https://www.stellar.org/developers/learn/concepts/transactions.html)
 						.addMemo(StellarSdk.Memo.text('Reddit tip!'))
@@ -322,7 +340,6 @@ function readUserInterface() {
 								$("#axonOK").click(function () {
 									axon.sendTipFromLink({
 										element: me,
-										done: mB.close,
 										toAccount: account
 									})
 									.then(mB.close)
