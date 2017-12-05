@@ -7,19 +7,19 @@
 		INSUFFICIENT_FUNDS: 4
 	};
 	me.config = {};
-	
+
 	// What is the current configuration?
 	chrome.runtime.sendMessage({
 		type: 'GetConfig'
 	}, function (value) {
 		console.log("Stored network preference:", value);
 		me.config = value;
-//		if (value !== null)
-//			me.config.network = value;
+		//		if (value !== null)
+		//			me.config.network = value;
 		if (options.done)
 			options.done();
 	});
-	
+
 	// Listen for Axon messages
 	chrome.runtime.onMessage.addListener(
 		function (request, sender, sendResponse) {
@@ -55,113 +55,160 @@ Axon.prototype.Stellar = function () {
 	me.FIXED_BASIC_CHARGE = 0.1;
 
 	/**
-	 *  Send a payment to a user
+	 *  This is the secret key that should not be made public.
+	 *  Not a problem for an extension as this is running in a code sandbox.
 	 */
-	me.sendPayment = function (receiver) {
-		var payStatus = new Promise(function (resolve, reject) {
-				var receiverPublicKey = receiver.key;
-				//console.log("Axon.Stellar.SendPayment");
-				// This is the secret key that should not be made public.
-				// Not a problem for an extension as this is running in a code sandbox.
-				var yourSecretKey = prompt("Enter your Stellar seed (empty=CANCEL): ", "your Stellar seed");
-				if (!yourSecretKey)
-					return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
+	me.getAccountSeed = function () {
+		var seed = new Promise(function (resolve, reject) {
+				// First see if there is an active account in the extension
+				// What is the current configuration?
+				chrome.runtime.sendMessage({
+					type: 'GetCurrentAccount'
+				}, function (value) {
+					console.log("Current Account", value);
+					if (value)
+						resolve(value);
+					else {
+						var privateKey = prompt("Enter your Stellar seed (empty=CANCEL): ", "your Stellar seed");
+						if (privateKey)
+							return resolve(privateKey);
+						else
+							return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
+					}
+				});
+			});
+		return seed;
+	};
 
+	me.getAmountToSend = function (state) {
+		var p = new Promise(function (resolve, reject) {
 				var amountStr = prompt("Enter the amount (you will be asked to confirm): ", "the amount");
 				if (!amountStr || amountStr == "0")
 					return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
 
 				var amt = parseFloat(amountStr) - me.FIXED_BASIC_CHARGE;
-				if (amt <= 0){
+				if (amt <= 0) {
 					return reject(new axon.PaymentError({
-						type: axon.enums.INSUFFICIENT_FUNDS,
-						message: "Insufficient funds to cover the basic charge"
-					}));
+							type: axon.enums.INSUFFICIENT_FUNDS,
+							message: "Insufficient funds to cover the basic charge"
+						}));
 				}
 				if (!confirm("Are you sure you wish to send " + amt + " lumens from\n" +
-						yourSecretKey + " to " + receiver.name + "?"))
+						state.privateKey + " to " + state.receiverName + "?"))
 					return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
 
-				// Generate the public address key from the seed.
-				var sourceKeypair = StellarSdk.Keypair.fromSecret(yourSecretKey);
-				var sourcePublicKey = sourceKeypair.publicKey();
-
-				// Configure StellarSdk to talk to the horizon instance hosted by Stellar.org
-				var horizon,
-				useNet;
-
-				// May see further network options if running with private networks.
-				if (axon.config.network === "public") {
-					// To use the live network, set the hostname to 'horizon.stellar.org'
-					//horizon = 'https://horizon.stellar.org';
-					useNet = StellarSdk.Network.usePublicNetwork;
-				} else {
-					// To use the test network, set the hostname to 'horizon.stellar.org'
-					//horizon = 'https://horizon-testnet.stellar.org';
-					useNet = StellarSdk.Network.useTestNetwork;
-				}
-				var server = new StellarSdk.Server(axon.config.horizon);
-				useNet.call(StellarSdk.Network);
-				// Transactions require a valid sequence number that is specific to this account.
-				// We can fetch the current sequence number for the source account from Horizon.
-				server.loadAccount(sourcePublicKey)
-				.then(function (account) {
-					var transaction = new StellarSdk.TransactionBuilder(account)
-						// Add a payment operation to the transaction
-						.addOperation(StellarSdk.Operation.payment({
-								destination: receiverPublicKey,
-								asset: StellarSdk.Asset.native(),
-								amount: "" + amt
-							}))
-						// Base extension payment
-						.addOperation(StellarSdk.Operation.payment({
-								destination: axon.config.baseAccount,
-								asset: StellarSdk.Asset.native(),
-								amount: "0.1"
-							}))
-						// Uncomment to add a memo (https://www.stellar.org/developers/learn/concepts/transactions.html)
-						.addMemo(StellarSdk.Memo.text('Reddit tip!'))
-						.build();
-
-					// Sign this transaction with the secret key
-					// NOTE: signing is transaction is network specific. Test network transactions
-					// won't work in the public network. To switch networks, use the Network object
-					// as explained above (look for StellarSdk.Network).
-					transaction.sign(sourceKeypair);
-
-					// Let's see the XDR (encoded in base64) of the transaction we just built
-					console.log(transaction.toEnvelope().toXDR('base64'));
-
-					// Submit the transaction to the Horizon server. The Horizon server will then
-					// submit the transaction into the network for us.
-					server.submitTransaction(transaction)
-					.then(function (transactionResult) {
-						console.log(JSON.stringify(transactionResult, null, 2));
-						console.log('\nSuccess! View the transaction at: ');
-						console.log(transactionResult._links.transaction.href);
-						resolve();
-					})
-					.catch (function (e) {
-						console.log('An error has occured:');
-						console.log(e);
-						reject(new axon.PaymentError({
-								type: axon.enums.TRANSACTION_ERROR,
-								message: "An error occurred sending the transaction",
-								contents: e
-							}));
-					});
-				})
-				.catch (function (e) {
-					console.error(e);
-					reject(new axon.PaymentError({
-							type: axon.enums.DESTINATION_ACCOUNT_ERROR,
-							message: "Unable to connect with the destination account",
-							contents: e
-						}));
-				});
+				resolve(amt);
 			});
-		return payStatus;
+		return p;
 	};
+
+	/**
+	 *  Load our account
+	 */
+	me.loadAccount = function (state) {
+		// Generate the public address key from the seed.
+		state.sourceKeypair = StellarSdk.Keypair.fromSecret(state.privateKey);
+		var sourcePublicKey = state.sourceKeypair.publicKey();
+
+		// Configure StellarSdk to talk to the horizon instance hosted by Stellar.org
+		var useNet;
+
+		// May see further network options if running with private networks.
+		if (axon.config.network === "public") {
+			// To use the live network, set the hostname to 'horizon.stellar.org'
+			//horizon = 'https://horizon.stellar.org';
+			useNet = StellarSdk.Network.usePublicNetwork;
+		} else {
+			// To use the test network, set the hostname to 'horizon.stellar.org'
+			//horizon = 'https://horizon-testnet.stellar.org';
+			useNet = StellarSdk.Network.useTestNetwork;
+		}
+		state.server = new StellarSdk.Server(axon.config.horizon);
+		useNet.call(StellarSdk.Network);
+		// Transactions require a valid sequence number that is specific to this account.
+		// We can fetch the current sequence number for the source account from Horizon.
+		return state.server.loadAccount(sourcePublicKey)
+		.catch (function (e) {
+			console.error(e);
+			throw new axon.PaymentError({
+				type: axon.enums.DESTINATION_ACCOUNT_ERROR,
+				message: "Unable to connect with the destination account",
+				contents: e
+			});
+		});
+	};
+	/**
+	 *  Build the transaction and send through the network
+	 */
+	me.buildAndSend = function (state) {
+		var transaction = new StellarSdk.TransactionBuilder(state.account)
+			// Add a payment operation to the transaction
+			.addOperation(StellarSdk.Operation.payment({
+					destination: state.receiverPublicKey,
+					asset: StellarSdk.Asset.native(),
+					amount: "" + state.amount
+				}))
+			// Base extension payment
+			.addOperation(StellarSdk.Operation.payment({
+					destination: axon.config.baseAccount,
+					asset: StellarSdk.Asset.native(),
+					amount: "0.1"
+				}))
+			// Uncomment to add a memo (https://www.stellar.org/developers/learn/concepts/transactions.html)
+			.addMemo(StellarSdk.Memo.text('Reddit tip!'))
+			.build();
+
+		// Sign this transaction with the secret key
+		// NOTE: signing is transaction is network specific. Test network transactions
+		// won't work in the public network. To switch networks, use the Network object
+		// as explained above (look for StellarSdk.Network).
+		transaction.sign(state.sourceKeypair);
+
+		// Let's see the XDR (encoded in base64) of the transaction we just built
+		console.log(transaction.toEnvelope().toXDR('base64'));
+
+		// Submit the transaction to the Horizon server. The Horizon server will then
+		// submit the transaction into the network for us.
+		return state.server.submitTransaction(transaction)
+		.catch (function (e) {
+			console.log('An error has occured:');
+			console.log(e);
+			throw new axon.PaymentError({
+				type: axon.enums.TRANSACTION_ERROR,
+				message: "An error occurred sending the transaction",
+				contents: e
+			});
+		});
+	};
+
+	/**
+	 *  Send a payment to a user
+	 */
+	me.sendPayment = function (receiver) {
+		var paymentState = {
+			receiverPublicKey: receiver.key,
+			receiverName: receiver.name
+		};
+		return me.getAccountSeed()
+		.then(function (privateKey) {
+			paymentState.privateKey = privateKey;
+			return me.getAmountToSend(paymentState);
+		})
+		.then(function (amountToSend) {
+			paymentState.amount = amountToSend;
+			return me.loadAccount(paymentState);
+		})
+		.then(function (account) {
+			paymentState.account = account;
+			return me.buildAndSend(paymentState);
+		})
+		.then(function (transactionResult) {
+			console.log(JSON.stringify(transactionResult, null, 2));
+			console.log('\nSuccess! View the transaction at: ');
+			console.log(transactionResult._links.transaction.href);
+		});
+	};
+
 };
 
 // Add the font awesome icons

@@ -1,4 +1,8 @@
-// background.js
+/**
+ *  @file background.js
+ *  @brief AxonLite Chrome extension background processing 
+ */
+ 
 var _config;
 /**
  *  Get the configuration out of local storage
@@ -9,7 +13,7 @@ chrome.storage.local.get(null, function (config) {
 		_config = config;
 	else {
 		_config = {
-			version: 1,
+			version: axon.enums.CURRENT_VERSION,
 			network: 'public',
 			accounts: {}
 		};
@@ -19,6 +23,9 @@ chrome.storage.local.get(null, function (config) {
 });
 
 var axon = {
+	enums: {
+		CURRENT_VERSION: .1
+	},
 	/**
 	 *  Set the fixed public keys for the AxonLite account according to what network 
 	 *  is being used.
@@ -31,6 +38,15 @@ var axon = {
 			_config.baseAccount = "GAFKZ3KINIHFOXSMT23ESUCAWZY4OIPFRFWLBIB3GHPOUB6B5PM3DXYJ";
 			_config.horizon = 'https://horizon-testnet.stellar.org';
 		}
+	},
+	getCurrentAccount: function(cb){
+		if (_config.accounts){
+			for (var a in _config.accounts){
+				var acc = _config.accounts[a];
+				if (acc.active)
+					cb(acc.privateKey);
+			}
+		}
 	}
 };
 
@@ -40,18 +56,25 @@ var axon = {
  */
 chrome.runtime.onMessage.addListener(function (request, sender, callback) {
 	switch (request.type) {
+	case 'GetCurrentAccount':
+		// Is there a current selected account
+		axon.getCurrentAccount(callback);
+		break;
 	case 'SaveConfig':
 		// Save it using the Chrome extension storage API.
 		// Called from the popup
+		// Create a clone for saving. Remove sensitive properties
+		var cfg = JSON.parse(JSON.stringify( request.value ));
 		// The base account is never placed into local storage
-		var cfg = request.value;
 		delete cfg.baseAccount;
-		for (var k in cfg.accounts)
+		for (var k in cfg.accounts){
+			cfg.accounts[k].active = false;
 			delete cfg.accounts[k].privateKey;
-
-		chrome.storage.local.set(request.value, function () {
+		}
+		cfg.version = axon.enums.CURRENT_VERSION;
+		chrome.storage.local.set(cfg, function () {
 			_config = request.value;
-			axon.setAccounts();
+			//axon.setAccounts();
 			console.log('Settings saved');
 			
 			// Inform all tabs of the configuration change

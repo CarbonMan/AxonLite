@@ -1,11 +1,8 @@
 //var T$.L10n;
-/*
+var axon;
 $(function(){
-	T$.L10n = $.extend(T$.L10n,{
-		"Balance": "Balance"
-	}
+	axon = new Axon();
 });
-*/
 
 document.addEventListener('DOMContentLoaded', () => {
 	$('.menu .item').tab();
@@ -14,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		var accName = $("#accountName").val();
 		if (accName) {
 			var account = {
-				id: ""+Math.floor(Math.random() * 10 ** 7),
+				id: "" + Math.floor(Math.random() * 10 ** 7),
 				title: accName,
 				privateKey: ""
 			}
@@ -27,13 +24,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function generateTab(settings) {
 	// Does the tab already exist?
-	if ( $('#' + settings.id + '_tab').length ) return;
+	if ($('#' + settings.id).length)
+		return;
 	// If not then create it.
-	var tab = $('<a id="' + settings.id + '_tab" class="item" data-tab="' + settings.id + '">' + settings.title + '</a>')
-		.appendTo("#tabs");
+	var tab = $('<a id="' + settings.id + '" class="item" data-tab="' + settings.id + '">' + settings.title + '</a>')
+		.appendTo("#tabs")
+		.click(function () {
+			var id = $(this).attr("id");
+			if ($("#" + id + "_Key").val())
+				axon.config.accounts[id].active = true;
+		});
 
 	var content = $('<div id="' + settings.id + '_content" class="ui bottom attached tab segment" data-tab="' + settings.id + '">' +
-			'<h4>Connect to account</h4>' +
+			'<h4>Connect to account on ' + axon.i18n(axon.network) + '</h4>' +
 			'<b>Private keys will be forgotten</b>.' +
 			'<div class="ui icon input">' +
 			'Private Key<br/>' +
@@ -46,23 +49,32 @@ function generateTab(settings) {
 			'</div>');
 	content.insertBefore("#closeBtn");
 	// The content must have loaded prior to creating the tab.
-	tab.tab();
+	tab.tab({
+		'onVisible':function(){
+			// This is now the active account
+			axon.config.accounts[settings.id].active = true;
+		}
+	});
 
 	$("#" + settings.id + "_OpenBtn").click(function () {
 		var sk = $('#' + settings.id + '_Key').val();
-		if (sk){
-			axon.config.accounts[settings.id].privateKey = sk;
+		if (sk) {
+			var acc = axon.config.accounts[settings.id];
+			acc.network = axon.network;
+			acc.privateKey = sk;
+			acc.active = true;
 			axon.saveConfigChanges();
+			// Show current balance
 			loadAccountDetails({
 				key: sk,
 				div: settings.id + '_status'
 			});
 		}
 	});
-	
+
 	$("#" + settings.id + "_DelBtn").click(function () {
 		$("#" + settings.id + "_content").remove();
-		$("#" + settings.id + "_tab").remove();
+		$("#" + settings.id).remove();
 		delete axon.config.accounts[settings.id];
 		axon.saveConfigChanges();
 	});
@@ -72,13 +84,12 @@ function generateTab(settings) {
  *  The configuration choices are persisted across sessions through
  *  local storage.
  */
-var axon = new function () {
+function Axon() {
 	var _config;
 	var me = this;
-	this.L10n = {};
 	this.i18n = function (string) {
-    return this.L10n[string] || string;
-};
+		return Axon.L10n[string] || string;
+	};
 	// Request the latest configuration
 	chrome.runtime.sendMessage({
 		type: "GetConfig"
@@ -115,6 +126,14 @@ var axon = new function () {
 			// The base account for the AxonLite extension
 			//setBaseAccount();
 			this.saveConfigChanges();
+			testNetBtn.classList.remove("positive");
+			publicNetBtn.classList.remove("positive");
+			if (val == "public")
+				publicNetBtn.classList.add("positive");
+			else
+				testNetBtn.classList.add("positive");
+			alert(axon.i18n("Network has been changed refresh open pages"));
+			console.log("Network changed to ", val);
 		}
 	});
 
@@ -128,15 +147,20 @@ var axon = new function () {
 			console.log("Configuration saved");
 		});
 	};
-	
-	this.checkAccountTabs = function(){
-		for (var k in _config.accounts){
+
+	this.checkAccountTabs = function () {
+		for (var k in _config.accounts) {
 			var acc = _config.accounts[k];
 			generateTab(acc);
 		}
 	};
 };
+// i18n see messages folder
+Axon.L10n = {};
 
+/**
+ *  Load the current state of the account
+ */
 function loadAccountDetails(options) {
 	var sk = options.key;
 	// Get the account details
@@ -147,11 +171,11 @@ function loadAccountDetails(options) {
 	$.get(url, function (data) {
 		console.log(data);
 		var accState = '<table class="ui compact table">' +
-		'<tr>'+
-		'<td>' + axon.i18n("Balance") + '</td>' + 
-		'<td>' + data.balances[0].balance + '</td>' + 
-		'</tr>' +
-		'</table>';
+			'<tr>' +
+			'<td>' + axon.i18n("Balance") + '</td>' +
+			'<td>' + data.balances[0].balance + '</td>' +
+			'</tr>' +
+			'</table>';
 		$("#" + options.div).html(accState);
 	})
 	.catch (function (e) {
@@ -173,16 +197,10 @@ function initializeScreen() {
 		testNetBtn.classList.add("positive");
 
 	publicNetBtn.addEventListener("click", function () {
-		console.log("You clicked publicNetBtn");
-		testNetBtn.classList.remove("positive");
-		publicNetBtn.classList.add("positive");
 		axon.network = "public";
 	});
 
 	testNetBtn.addEventListener("click", function () {
-		console.log("You clicked testNetBtn");
-		publicNetBtn.classList.remove("positive");
-		testNetBtn.classList.add("positive");
 		axon.network = "test";
 	});
 
@@ -190,6 +208,6 @@ function initializeScreen() {
 	closeBtn.addEventListener("click", function () {
 		window.close();
 	});
-	
+
 	axon.checkAccountTabs();
 }
