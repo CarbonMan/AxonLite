@@ -16,24 +16,67 @@
 		"storage",
 		"contextMenus"
 	],
-	"content_scripts": [
-		{
+	"content_scripts": [{
+			"matches": [
+				"https://github.com/CarbonMan/AxonLite/issues/1/*"
+			],
+			"js": ["js/jquery-3.2.1.min.js",
+				"js/eventTarget.js",
+				"js/Content/Loader.js",
+				"js/Github/GithubAccounts.js",
+				"js/Content/main.js"]
+		}, {
+			"matches": [
+				"https://github.com/CarbonMan/AxonLite/issues/2/*"
+			],
+			"js": ["js/jquery-3.2.1.min.js",
+				"js/eventTarget.js",
+				"js/Content/Loader.js",
+				"js/Github/GithubAccounts.js",
+				"js/Content/main.js"]
+		}, {
+			"matches": [
+				"https://github.com/CarbonMan/AxonLite/issues/*"
+			],
+			"js": ["js/jquery-3.2.1.min.js", "js/eventTarget.js",
+				"js/Content/Loader.js",
+				"js/Content/Payment.js",
+				"js/Stellar/StellarFinancials.js",
+				"js/Github/GithubPayments.js",
+				"js/Stellar/stellar-sdk.min.js",
+				"js/Content/main.js"
+			]
+		}, {
 			"matches": [
 				"https://www.reddit.com/r/AxonLite/comments/*/register_your_public_stellar_key/*"
 			],
-			"js": ["js/jquery-3.2.1.min.js", "js/content.js", "js/allAccounts.js"]
-		},
-		{
+			"js": ["js/jquery-3.2.1.min.js",
+				"js/eventTarget.js",
+				"js/Content/Loader.js",
+				"js/Reddit/RedditAccounts.js",
+				"js/Content/main.js"]
+		}, {
 			"matches": [
 				"https://www.reddit.com/r/AxonLite/comments/*/register_your_test_stellar_key/*"
 			],
-			"js": ["js/jquery-3.2.1.min.js", "js/content.js", "js/allAccounts.js"]
-		},
-		{
+			"js": ["js/jquery-3.2.1.min.js",
+				"js/eventTarget.js",
+				"js/Content/Loader.js",
+				"js/Reddit/RedditAccounts.js",
+				"js/Content/main.js"]
+		}, {
 			"matches": [
 				"https://www.reddit.com/r/*/comments/*"
 			],
-			"js": ["js/jquery-3.2.1.min.js", "js/content.js", "js/micropayments.js", "js/stellar-sdk.min.js"]
+			"js": ["js/jquery-3.2.1.min.js",
+				"js/eventTarget.js",
+				"js/Content/Loader.js",
+				"js/Content/Payment.js",
+				"js/Stellar/StellarFinancials.js",
+				"js/Reddit/RedditPayments.js",
+				"js/Stellar/stellar-sdk.min.js",
+				"js/Content/main.js"
+			]
 		}
 	],
 	"background": {

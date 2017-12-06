@@ -44,7 +44,7 @@ var axon = {
 			for (var a in _config.accounts){
 				var acc = _config.accounts[a];
 				if (acc.active)
-					cb(acc.privateKey);
+					cb(acc);
 			}
 		}
 	}
