@@ -37,4 +37,19 @@ Add a comment with your Stellar account public key
 
 Go to any Reddit topic. Any user who has **registered** will show a "Lumens" option under their comment. Simply click it and send them some lumens.
 
+## Github
+
+### To register
+
+> Register your public Stellar key
+
+Go to [this issue](https://github.com/CarbonMan/AxonLite/issues/2).
+
+Add a comment with your Stellar account public key
+
+### To use it
+
+Go to any Github issue. Any user who has **registered** will show a "Lumens" option in their comment header. Simply click it and send them some lumens.
+
+
 
