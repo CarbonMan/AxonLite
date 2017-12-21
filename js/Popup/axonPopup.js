@@ -2,6 +2,7 @@
 var axon;
 $(function(){
 	axon = new Axon();
+	$("#currentAccount").html(axon.i18n("No active account"));
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				privateKey: ""
 			}
 			axon.config.accounts[account.id] = account;
+			axon.saveConfigChanges();
 			generateTab(account);
 		}
 		$("#accountName").val("");
@@ -44,7 +46,7 @@ function generateTab(settings) {
 			'<i class="spy icon"></i>' +
 			'</div><br/><br/>' +
 			'<div id="' + settings.id + '_status"></div><br/>' +
-			'<button id="' + settings.id + '_OpenBtn" class="ui small button" >OPEN</button>' +
+			'<button id="' + settings.id + '_OpenBtn" class="ui small button" >CONNECT ACCOUNT</button>' +
 			'<button id="' + settings.id + '_DelBtn" class="ui small button" >UNLOAD</button>' +
 			'</div>');
 	content.insertBefore("#closeBtn");
@@ -52,7 +54,12 @@ function generateTab(settings) {
 	tab.tab({
 		'onVisible':function(){
 			// This is now the active account
-			axon.config.accounts[settings.id].active = true;
+			var acc = axon.config.accounts[settings.id];
+			acc.active = true;
+			if (acc.privateKey)
+				$("#currentAccount").html(settings.title + " " + axon.i18n("account selected"));
+			else
+				$("#currentAccount").html(axon.i18n("No active account"));
 		}
 	});
 
@@ -63,13 +70,15 @@ function generateTab(settings) {
 			acc.network = axon.network;
 			acc.privateKey = sk;
 			acc.active = true;
+			$("#currentAccount").html(settings.title + " " + axon.i18n("account selected"));
 			axon.saveConfigChanges();
 			// Show current balance
 			loadAccountDetails({
 				key: sk,
 				div: settings.id + '_status'
 			});
-		}
+		}else
+			alert(axon.i18n("Private key required"));
 	});
 
 	$("#" + settings.id + "_DelBtn").click(function () {
@@ -77,6 +86,8 @@ function generateTab(settings) {
 		$("#" + settings.id).remove();
 		delete axon.config.accounts[settings.id];
 		axon.saveConfigChanges();
+		// Go to the home tab
+		$('.ui.menu').find('.item').tab('change tab', 'settings');
 	});
 }
 
@@ -87,9 +98,7 @@ function generateTab(settings) {
 function Axon() {
 	var _config;
 	var me = this;
-	this.i18n = function (string) {
-		return Axon.L10n[string] || string;
-	};
+	me.manifest = {};
 	// Request the latest configuration
 	chrome.runtime.sendMessage({
 		type: "GetConfig"
@@ -124,7 +133,6 @@ function Axon() {
 		set: function (val) {
 			_config.network = val;
 			// The base account for the AxonLite extension
-			//setBaseAccount();
 			this.saveConfigChanges();
 			testNetBtn.classList.remove("positive");
 			publicNetBtn.classList.remove("positive");
@@ -155,8 +163,6 @@ function Axon() {
 		}
 	};
 };
-// i18n see messages folder
-Axon.L10n = {};
 
 /**
  *  Load the current state of the account
@@ -210,4 +216,36 @@ function initializeScreen() {
 	});
 
 	axon.checkAccountTabs();
+	
+	// Get the named sites from the manifest file
+	XHR("../manifest.json", function(manifest){
+		axon.manifest = JSON.parse(manifest);
+		var select = document.getElementsByName("url")[0];
+		if (axon.manifest['content_scripts']){
+			axon.manifest['content_scripts'].forEach( (cs) => {
+				//console.log(cs);
+				if (cs.name){
+					//console.log(cs.name);
+					var option = document.createElement('option');
+					option.text = option.value = cs.name;
+					select.add(option, 0);
+				}
+			});
+		}
+		//console.log(axon.manifest);
+	});
+	//$(".ui .dropdown").dropdown();
+}
+
+
+// Attempt to pull the manifest.json file
+function XHR(file, callback){
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function(){
+        if(xhr.readyState === 4 && xhr.status === 200){
+            callback(xhr.responseText);
+        }
+    }
+    xhr.open('GET', file, true);
+    xhr.send();
 }

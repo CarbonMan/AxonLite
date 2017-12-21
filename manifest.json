@@ -17,12 +17,16 @@
 		"contextMenus"
 	],
 	"content_scripts": [{
+			"name": "Github",
 			"matches": [
 				"https://github.com/CarbonMan/AxonLite/issues/1/*"
 			],
 			"js": ["js/jquery-3.2.1.min.js",
 				"js/eventTarget.js",
 				"js/Content/Loader.js",
+				"js/messages/messages.js",
+				"js/modalHeader.js",
+				"js/modal.js",
 				"js/Github/GithubAccounts.js",
 				"js/Content/main.js"]
 		}, {
@@ -32,6 +36,9 @@
 			"js": ["js/jquery-3.2.1.min.js",
 				"js/eventTarget.js",
 				"js/Content/Loader.js",
+				"js/messages/messages.js",
+				"js/modalHeader.js",
+				"js/modal.js",
 				"js/Github/GithubAccounts.js",
 				"js/Content/main.js"]
 		}, {
@@ -40,6 +47,9 @@
 			],
 			"js": ["js/jquery-3.2.1.min.js", "js/eventTarget.js",
 				"js/Content/Loader.js",
+				"js/messages/messages.js",
+				"js/modalHeader.js",
+				"js/modal.js",
 				"js/Content/Payment.js",
 				"js/Stellar/StellarFinancials.js",
 				"js/Github/GithubPayments.js",
@@ -47,12 +57,16 @@
 				"js/Content/main.js"
 			]
 		}, {
+			"name": "Reddit",
 			"matches": [
 				"https://www.reddit.com/r/AxonLite/comments/*/register_your_public_stellar_key/*"
 			],
 			"js": ["js/jquery-3.2.1.min.js",
 				"js/eventTarget.js",
 				"js/Content/Loader.js",
+				"js/messages/messages.js",
+				"js/modalHeader.js",
+				"js/modal.js",
 				"js/Reddit/RedditAccounts.js",
 				"js/Content/main.js"]
 		}, {
@@ -62,6 +76,9 @@
 			"js": ["js/jquery-3.2.1.min.js",
 				"js/eventTarget.js",
 				"js/Content/Loader.js",
+				"js/messages/messages.js",
+				"js/modalHeader.js",
+				"js/modal.js",
 				"js/Reddit/RedditAccounts.js",
 				"js/Content/main.js"]
 		}, {
@@ -71,6 +88,9 @@
 			"js": ["js/jquery-3.2.1.min.js",
 				"js/eventTarget.js",
 				"js/Content/Loader.js",
+				"js/messages/messages.js",
+				"js/modalHeader.js",
+				"js/modal.js",
 				"js/Content/Payment.js",
 				"js/Stellar/StellarFinancials.js",
 				"js/Reddit/RedditPayments.js",
@@ -80,7 +100,7 @@
 		}
 	],
 	"background": {
-		"scripts": ["js/background.js"],
+		"scripts": ["js/Background/background.js"],
 		"persistent": false
 	}
 }

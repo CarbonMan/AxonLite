@@ -30,7 +30,16 @@ function gatherAccounts(){
 		localStorage.setItem("stellar_test_reddit",  JSON.stringify(accounts));
 	else
 		localStorage.setItem("stellar_public_reddit",  JSON.stringify(accounts));
-	alert(accounts.length + " accounts registered");
+	var mB = new axon.Modal({
+		title: axon.i18n("Accounts registered"),
+		description: accounts.length + " " + axon.i18n("accounts registered"),
+		height: '100',
+		width: '200'
+	});
+	setTimeout( ()=>{
+		mB.close();
+	}, 2500);
+	//alert(accounts.length + " accounts registered");
 }
 
 Axon.register(gatherAccounts);

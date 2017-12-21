@@ -3,9 +3,16 @@
   <head>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css" />
     <title>Axon Lite</title>
+	<link href="../css/contactBook.css" rel="stylesheet">
     <script src="../js/jquery-3.2.1.min.js"></script>
 	<script src="../js/semantic.min.js"></script>
-    <script src="../js/axonPopup.js"></script>
+    <!-- 
+	<script src="../js/modalHeader.js"></script>
+    <script src="../js/modal.js"></script>
+	-->
+    <script src="../js/popup/axonPopup.js"></script>
+    <script src="../js/popup/contactBook.js"></script>
+    <script src="../js/messages/messages.js"></script>
     <script src="../js/messages/en/popup.js"></script>
     <script src="../js/Stellar/stellar-sdk.min.js"></script>
 	<style>
@@ -18,9 +25,12 @@
   <body>
     <h3>Axon Lite settings</h3>
 	<div id="tabs" class="ui top attached tabular menu">
-	  <a class="active item" data-tab="settings">Accounts</a>
+	  <a class="active item" data-tab="settings">Settings</a>
+	  <a class="item" data-tab="addresses">Address book</a>
 	</div>
+	
 	<div class="ui bottom attached active tab segment" data-tab="settings">
+		<div id="currentAccount"></div>
 		<div class="ui buttons">
 		  <button id="testNetBtn" class="ui button">Test Net</button>
 		  <div class="or"></div>
@@ -39,6 +49,53 @@
 		</div>
 		<button id='addBtn' class="ui small button" >ADD</button>
 	</div>	
+
+	<div class="ui bottom attached tab segment" data-tab="addresses">
+		<!-- Address book -->
+		<h4>Contacts (Experimental)</h4>
+		<button class="ui small button" id="addContactBtn">ADD</button>
+		<div style="display:none" id="contactsForm">
+			<form id="contacts-form" class="ui form">
+				<!-- <div class="field item text"> -->
+				<div style="width: 250px; display:inline;">
+					<select class="ui inline fluid dropdown" name="url">
+					</select>
+				</div>
+				<div class="field item text">
+					<label>Contact:</label>
+					<div class="field"><input type="text" name="name" /></div>
+				</div>
+				<div class="field item text">
+					<label>Public Key:</label>
+					<div class="field"><input type="text" name="publicKey" /></div>
+				</div>
+				<div class="field item text">
+					<label>Email:</label>
+					<div class="field"><input type="text" name="email" /></div>
+				</div>
+				<div class="button-wrapper">
+					<div class="item button">
+						<div class="field"><input type="button" id="contacts-op-discard" value="Discard" /></div>
+					</div>
+					<div class="item button button-default">
+						<div class="field"><input type="submit" id="contacts-op-save" value="Save" /></div>
+					</div>
+				</div>
+				<input type="hidden" name="id_entry" value="0" />
+			</form>
+		</div>
+		<table id="contacts-table">
+			<tr id="contacts-head">
+				<th>URL</th>
+				<th>Contact</th>
+				<th>Public Key</th>
+				<th>Email</th>
+				<th>Actions</th>
+			</tr>
+		</table>
+		<!-- Address book -->
+	</div>	
+	
 	<button id='closeBtn' class="ui button" >CLOSE</button>
   </body>
 </html>

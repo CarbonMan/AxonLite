@@ -2,10 +2,14 @@
  *  @file Loader.js
  *  @brief Defines the Axon class
  */
-if (typeof Axon == "undefined"){
+if (typeof Axon == "undefined") {
 	// In case multiple patterns match in the manifest.json
 	function Axon(options) {
 		var me = this;
+
+		// This is the currently active private key
+		//me.activePrivateKey = "";
+
 		this.enums = {
 			USER_CANCELLED: 0,
 			TRANSACTION_ERROR: 1,
@@ -14,32 +18,40 @@ if (typeof Axon == "undefined"){
 			INITIALIZED: "INIT"
 		};
 		me.config = {};
-		//me.financials = new me.Financials();
+
 		eventHandler(me);
 
 		// What is the current configuration?
 		chrome.runtime.sendMessage({
 			type: 'GetConfig'
-		}, function (value) {
+		}, (value) => {
 			console.log("Stored network preference:", value);
 			me.config = value;
-			Axon.handlers.forEach(function(init){
+			Axon.handlers.forEach(function (init) {
 				init();
 			});
-			me.fire( me.enums.INITIALIZED );
+			me.fire(me.enums.INITIALIZED);
 		});
 
 		// Listen for Axon messages
 		chrome.runtime.onMessage.addListener(
-			function (request, sender, sendResponse) {
-			if (request.type == "config")
+			(request, sender, sendResponse) => {
+			if (request.type == "config") {
 				me.config = request.value;
+				// // Get the currently active account private key
+				// me.activePrivateKey = "";
+				// for (var p in me.config.accounts) {
+					// var acc = me.config.accounts[p];
+					// if (acc.active && acc.privateKey)
+						// me.activePrivateKey = acc.privateKey;
+				// });
+			}
 			console.log('Received message', request);
 		});
 	}
 
 	Axon.handlers = [];
-	Axon.register = function(handler){
+	Axon.register = function (handler) {
 		this.handlers.push(handler);
 	}
 

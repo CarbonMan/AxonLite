@@ -42,23 +42,15 @@ Axon.prototype.Financials = function () {
 	me.getAmountToSend = function (state) {
 		var p = new Promise(function (resolve, reject) {
 				var amountStr = prompt("Enter the amount (you will be asked to confirm): ", "the amount");
-				if (!amountStr || amountStr == "0")
+				var gross = parseFloat(amountStr);
+				if (isNaN(gross) || !gross)
 					return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
 
-				var gross = parseFloat(amountStr);
 				var fee = gross * me.FIXED_BASIC_PERCENTAGE;
 				fee = (fee > me.FIXED_MINIMUM_CHARGE ? fee : me.FIXED_MINIMUM_CHARGE);
 				var net = gross + fee;
 				state.amount = gross;
 				state.fee = fee;
-				/*
-				if (amt <= 0) {
-					return reject(new axon.PaymentError({
-							type: axon.enums.INSUFFICIENT_FUNDS,
-							message: "Insufficient funds to cover the basic charge"
-						}));
-				}
-				*/
 				if (!confirm("Send " + gross + " XLM from\n" +
 						"the " + state.title + " account to " + state.receiverName + "?\n" +
 						"Transfer fee is "+ fee + "XLM"))
@@ -161,15 +153,12 @@ Axon.prototype.Financials = function () {
 		};
 		return me.getAccountSeed(paymentState)
 		.then(function () {
-			//paymentState.privateKey = privateKey;
 			return me.getAmountToSend(paymentState);
 		})
 		.then(function () {
-			//paymentState.amount = amountToSend;
 			return me.loadAccount(paymentState);
 		})
 		.then(function () {
-			//paymentState.account = account;
 			return me.buildAndSend(paymentState);
 		})
 		.then(function (transactionResult) {
