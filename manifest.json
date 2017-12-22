@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 
 	"name": "Axon lite",
-	"description": "This extension allows the use of Stellar Lumens in specific pages.",
+	"description": "This extension allows the use of Stellar Lumens in specific sites.",
 	"version": "0.1",
 
 	"browser_action": {
