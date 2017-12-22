@@ -67,7 +67,7 @@
 				</div>
 				<div class="field item text">
 					<label>Public Key:</label>
-					<div class="field"><input type="text" name="publicKey" /></div>
+					<div class="field"><input type="text" name="key" /></div>
 				</div>
 				<div class="field item text">
 					<label>Email:</label>
@@ -84,13 +84,15 @@
 				<input type="hidden" name="id_entry" value="0" />
 			</form>
 		</div>
-		<table id="contacts-table">
+		<table id="contacts-table" style="display: block;
+        overflow-x: auto;
+        white-space: nowrap;">
 			<tr id="contacts-head">
+				<th>Actions</th>
 				<th>URL</th>
 				<th>Contact</th>
-				<th>Public Key</th>
 				<th>Email</th>
-				<th>Actions</th>
+				<th>Public Key</th>
 			</tr>
 		</table>
 		<!-- Address book -->

@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					name: this.name.value,
 					url: this.url.value,
 					email: this.email.value,
-					publicKey: this.publicKey.value
+					key: this.key.value
 				};
 				if (!entry.id) { // add
 					Contacts.entries.push(entry);
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
 						Contacts.$form.url.value = entry.url;
 						Contacts.$form.email.value = entry.email;
 						Contacts.$form.id_entry.value = entry.id;
-						Contacts.$form.publicKey.value = entry.publicKey;
+						Contacts.$form.key.value = entry.key;
 						$("#addContactBtn").hide();
 						$("#contactsForm").show();
 					} else if (op == "remove") {
@@ -140,15 +140,20 @@ document.addEventListener('DOMContentLoaded', () => {
 			var td,
 			tr = opts.row,
 			entry = opts.entry;
-			[entry.url, entry.name, entry.publicKey, entry.email].forEach(function (field) {
+			td = document.createElement("td");
+			td.innerHTML = '<a data-op="edit" data-id="' + entry.id + '">Edit</a> | <a data-op="remove" data-id="' + entry.id + '">Remove</a>';
+			opts.row.appendChild(td);
+
+			[entry.url, entry.name, entry.email].forEach(function (field) {
 				td = document.createElement("td");
 				td.appendChild(document.createTextNode(field));
 				tr.appendChild(td);
 			});
-
 			td = document.createElement("td");
-			td.innerHTML = '<a data-op="edit" data-id="' + entry.id + '">Edit</a> | <a data-op="remove" data-id="' + entry.id + '">Remove</a>';
-			opts.row.appendChild(td);
+			td.style.width = '50px';
+			td.appendChild(document.createTextNode(entry.key));
+			tr.appendChild(td);
+
 		},
 
 		tableAdd: function (entry) {

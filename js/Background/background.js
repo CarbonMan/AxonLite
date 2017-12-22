@@ -66,7 +66,14 @@ chrome.runtime.onMessage.addListener(function (request, sender, callback) {
 	switch (request.type) {
 	case 'GetContacts':
 		chrome.storage.local.get('contacts', function (entry) {
-			console.log("Contacts retrieved", entry.contacts);
+			var cts = entry.contacts;
+			console.log("Contacts retrieved", cts);
+			// Request sent from a content page. Only return those contacts that are appropriate for the page
+			if (request.filter){
+				var cts = cts.filter(function (el) {
+				  return el.filter == request.filter;
+				});
+			}
 			callback(entry.contacts);
 		});
 		break;
