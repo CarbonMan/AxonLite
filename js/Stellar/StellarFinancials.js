@@ -3,7 +3,10 @@
  */
 Axon.prototype.Financials = function () {
 	var me = this;
+	me.currency = "Lumens";
 	me.showWarning = true;
+	me.networkTitle = "";
+	//me.gross = 0;
 	/**
 	 *  Base payment for the extension
 	 */
@@ -14,52 +17,93 @@ Axon.prototype.Financials = function () {
 	 *  This is the secret key that should not be made public.
 	 *  Not a problem for an extension as this is running in a code sandbox.
 	 */
-	me.getAccountSeed = function (state) {
-		var seed = new Promise(function (resolve, reject) {
+	// me.getAccountSeed = function (state) {
+	// var seed = new Promise( (resolve, reject) =>{
+	// // First see if there is an active account in the extension
+	// // What is the current configuration?
+	// chrome.runtime.sendMessage({
+	// type: 'GetCurrentAccount'
+	// }, function (acc) {
+	// console.log("Current Account", acc);
+	// if (acc){
+	// state.privateKey = acc.privateKey;
+	// state.title = acc.title;
+	// resolve();
+	// }else {
+	// var privateKey = prompt("Enter your Stellar seed (empty=CANCEL): ", "your Stellar seed");
+	// if (privateKey){
+	// state.privateKey = state.title = privateKey;
+	// resolve();
+	// }else
+	// reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
+	// }
+	// });
+	// });
+	// return seed;
+	// };
+
+	me.getAccount = function () {
+		var seed = new Promise((resolve, reject) => {
 				// First see if there is an active account in the extension
 				// What is the current configuration?
 				chrome.runtime.sendMessage({
 					type: 'GetCurrentAccount'
 				}, function (acc) {
 					console.log("Current Account", acc);
-					if (acc){
-						state.privateKey = acc.privateKey;
-						state.title = acc.title;
+					if (acc) {
+						resolve({
+							privateKey: acc.privateKey,
+							title: acc.title
+						});
+					} else
 						resolve();
-					}else {
-						var privateKey = prompt("Enter your Stellar seed (empty=CANCEL): ", "your Stellar seed");
-						if (privateKey){
-							state.privateKey = state.title = privateKey;
-							resolve();
-						}else
-							reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
-					}
 				});
 			});
 		return seed;
 	};
 
-	me.getAmountToSend = function (state) {
-		var p = new Promise(function (resolve, reject) {
-				var amountStr = prompt("Enter the amount (you will be asked to confirm): ", "the amount");
-				var gross = parseFloat(amountStr);
-				if (isNaN(gross) || !gross)
-					return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
+	me.calculateFee = function (state) {
+		return new Promise((resolve, reject) => {
+			// var amountStr = prompt("Enter the amount (you will be asked to confirm): ", "the amount");
+			// var gross = parseFloat(amountStr);
+			// if (isNaN(gross) || !gross)
+			// return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
 
-				var fee = gross * me.FIXED_BASIC_PERCENTAGE;
-				fee = (fee > me.FIXED_MINIMUM_CHARGE ? fee : me.FIXED_MINIMUM_CHARGE);
-				var net = gross + fee;
-				state.amount = gross;
-				state.fee = fee;
-				if (!confirm("Send " + gross + " XLM from\n" +
-						"the " + state.title + " account to " + state.receiverName + "?\n" +
-						"Transfer fee is "+ fee + "XLM"))
-					return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
+			var fee = state.amount * me.FIXED_BASIC_PERCENTAGE;
+			fee = (fee > me.FIXED_MINIMUM_CHARGE ? fee : me.FIXED_MINIMUM_CHARGE);
+			var net = state.amount + fee;
+			//state.amount = state.gross;
+			state.fee = fee;
+			if (!confirm("Send " + state.amount + " XLM from\n" +
+					"the " + (state.title || "private") + " account to " + state.receiverName + "?\n" +
+					"Transfer fee is " + fee + " XLM"))
+				return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
 
-				resolve();
-			});
-		return p;
+			resolve();
+		});
 	};
+
+	// me.getAmountToSend = function (state) {
+	// var p = new Promise( (resolve, reject) =>{
+	// // var amountStr = prompt("Enter the amount (you will be asked to confirm): ", "the amount");
+	// // var gross = parseFloat(amountStr);
+	// // if (isNaN(gross) || !gross)
+	// // return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
+
+	// var fee = state.gross * me.FIXED_BASIC_PERCENTAGE;
+	// fee = (fee > me.FIXED_MINIMUM_CHARGE ? fee : me.FIXED_MINIMUM_CHARGE);
+	// var net = state.gross + fee;
+	// state.amount = state.gross;
+	// state.fee = fee;
+	// if (!confirm("Send " + state.gross + " XLM from\n" +
+	// "the " + state.title + " account to " + state.receiverName + "?\n" +
+	// "Transfer fee is "+ fee + "XLM"))
+	// return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
+
+	// resolve();
+	// });
+	// return p;
+	// };
 
 	/**
 	 *  Load our account
@@ -87,7 +131,7 @@ Axon.prototype.Financials = function () {
 		// Transactions require a valid sequence number that is specific to this account.
 		// We can fetch the current sequence number for the source account from Horizon.
 		return state.server.loadAccount(sourcePublicKey)
-		.then(function(account){
+		.then(function (account) {
 			state.account = account;
 		})
 		.catch (function (e) {
@@ -114,7 +158,7 @@ Axon.prototype.Financials = function () {
 			.addOperation(StellarSdk.Operation.payment({
 					destination: axon.config.baseAccount,
 					asset: StellarSdk.Asset.native(),
-					amount: ""+state.fee
+					amount: "" + state.fee
 				}))
 			// Uncomment to add a memo (https://www.stellar.org/developers/learn/concepts/transactions.html)
 			.addMemo(StellarSdk.Memo.text('Reddit tip!'))
@@ -146,16 +190,16 @@ Axon.prototype.Financials = function () {
 	/**
 	 *  Send a payment to a user
 	 */
-	me.sendPayment = function (receiver) {
+	me.sendPayment = function (options) {
+		var receiver = options.account;
 		var paymentState = {
 			receiverPublicKey: receiver.key,
-			receiverName: receiver.name
+			receiverName: receiver.name,
+			privateKey: options.privateKey,
+			amount: options.amount
 		};
-		return me.getAccountSeed(paymentState)
-		.then(function () {
-			return me.getAmountToSend(paymentState);
-		})
-		.then(function () {
+		return me.calculateFee(paymentState)
+		.then(() => {
 			return me.loadAccount(paymentState);
 		})
 		.then(function () {
@@ -167,10 +211,26 @@ Axon.prototype.Financials = function () {
 			console.log(transactionResult._links.transaction.href);
 			return paymentState;
 		});
+		// return me.getAccountSeed(paymentState)
+		// .then(function () {
+		// return me.getAmountToSend(paymentState);
+		// })
+		// .then(function () {
+		// return me.loadAccount(paymentState);
+		// })
+		// .then(function () {
+		// return me.buildAndSend(paymentState);
+		// })
+		// .then(function (transactionResult) {
+		// console.log(JSON.stringify(transactionResult, null, 2));
+		// console.log('\nSuccess! View the transaction at: ');
+		// console.log(transactionResult._links.transaction.href);
+		// return paymentState;
+		// });
 	};
 
 };
 
-Axon.register(function(){
+Axon.register(function () {
 	axon.financials = new axon.Financials();
 });

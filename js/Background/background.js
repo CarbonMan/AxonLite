@@ -20,7 +20,7 @@ chrome.storage.local.get('config', function (config) {
 	}
 	axon.setNetwork();
 	// The base accounts are not stored
-	axon.setAccounts();
+	axon.setBaseAccount();
 });
 
 var axon = {
@@ -31,7 +31,7 @@ var axon = {
 	 *  Set the fixed public keys for the AxonLite account according to what network 
 	 *  is being used.
 	 */
-	setAccounts: function () {
+	setBaseAccount: function () {
 		if (_config.network == "public")
 			_config.baseAccount = "GD3XZY6576VGGP7D2RHTRJ2FHZ2W62FUFWEW27SI6MUXLWCFOVYZ4SRK";
 		else
@@ -48,13 +48,17 @@ var axon = {
 			_config.horizon = 'https://horizon-testnet.stellar.org';
 	},
 	getCurrentAccount: function(cb){
+		var account=null;
 		if (_config.accounts){
 			for (var a in _config.accounts){
 				var acc = _config.accounts[a];
-				if (acc.active)
-					cb(acc);
+				if (acc.active){
+					account = acc;
+					break;
+				}
 			}
 		}
+		cb(account);
 	}
 };
 
@@ -104,6 +108,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, callback) {
 			_config = request.value;
 			// Sets the network address for the current network 'test' / 'public'
 			axon.setNetwork();
+			axon.setBaseAccount();
 			console.log('Settings saved');
 			
 			// Inform all tabs of the configuration change

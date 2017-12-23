@@ -11,8 +11,8 @@ Axon.accounts = [];
 function readUserInterface() {
 	var accounts = [],
 	accLocation = (axon.config.network === "public" ? "stellar_public_reddit" : "stellar_test_reddit"),
-	netTitle = (axon.config.network === "public" ? "Public" : "Test"),
 	accountStr = localStorage.getItem(accLocation);
+	axon.networkTitle = (axon.config.network === "public" ? "Public" : "Test");
 	if (accountStr) {
 		//console.log("Account details found");
 		Axon.accounts = JSON.parse(accountStr);
@@ -22,16 +22,17 @@ function readUserInterface() {
 		filter: Axon.currentPage
 	},
 		(entries) => {
-			//console.log("Contacts received", entries);
-			entries.forEach( (el)=>{
-				Axon.accounts.push(el);
-			});
+		//console.log("Contacts received", entries);
+		entries.forEach((el) => {
+			Axon.accounts.push(el);
+		});
 	});
 	console.log("Contacts", Axon.accounts);
 	applyAccounts();
 }
 
-function applyAccounts(){
+function applyAccounts() {
+	var noop = () => {};
 	$(".comment").each(function (i) {
 		var name = $(this).attr("data-author");
 		for (var i in Axon.accounts) {
@@ -46,41 +47,18 @@ function applyAccounts(){
 					var giftButton = $('<li>' + a + 'Lumens</li></a>').click(function (event) {
 							var me = this;
 							event.preventDefault();
-							console.log("Give lumens");
-							var content = "Send Lumens to " + name +
-								"<br/>" +
-								"<b>No keys are stored on this computer or on our servers</b><br/>" +
-								"This application is protected against key theft<br/>" +
-								"<br/><br/>" +
-								"<div style='margin: 0 auto; text-align: center;'>" +
-								"<button id='axonOK' class='axon_ok_button'>PROCEED</button>&nbsp;" +
-								"<button id='axonClose' class='axon_close_button'>CLOSE</button>" +
-								"</div>";
-							var mB = new axon.Modal({
-									/* top: event.pageY - 100, */
-									title: 'Send a payment on the ' + netTitle + ' network',
-									description: content,
-									height: '150',
-									width: '400'
+							axon.manualPayment({
+								to: name
+							})
+							.then((payment) => {
+								return axon.sendTipFromLink({
+									amount: payment.amount,
+									element: me,
+									toAccount: account,
+									privateKey: payment.privateKey
 								});
-							$("#axonClose").click(function () {
-								mB.close();
-							});
-							$("#axonOK").click(function () {
-								mB.close();
-								setTimeout( ()=>{
-									var noop = () => {};
-									axon.sendTipFromLink({
-										element: me,
-										toAccount: account
-									})
-									.then( noop )
-									.catch (noop);
-								}, 0);
-								//.then(mB.close)
-								//.catch (mB.close);
-
-							});
+							})
+							.catch(noop);
 						});
 					list.append(giftButton);
 				})(Axon.accounts[i]);
@@ -94,7 +72,11 @@ function applyAccounts(){
  */
 Axon.prototype.sendTipFromLink = function (options) {
 	var elm = options.element;
-	return this.financials.sendPayment(options.toAccount)
+	return this.financials.sendPayment({
+		account: options.toAccount,
+		privateKey: options.privateKey,
+		amount: options.amount
+	})
 	.then(function (state) {
 		// Place a comment that a tip has been given. Have to find the reply button
 		var replyA = $(elm).siblings(".reply-button.login-required").find("a");
