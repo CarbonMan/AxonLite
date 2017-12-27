@@ -33,6 +33,7 @@ function readUserInterface() {
 
 function applyAccounts() {
 	var noop = () => {};
+	axon.changeIcon();
 	$(".comment").each(function (i) {
 		var name = $(this).attr("data-author");
 		for (var i in Axon.accounts) {
@@ -58,7 +59,7 @@ function applyAccounts() {
 									privateKey: payment.privateKey
 								});
 							})
-							.catch(noop);
+							.catch (noop);
 						});
 					list.append(giftButton);
 				})(Axon.accounts[i]);

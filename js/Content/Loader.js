@@ -36,23 +36,36 @@ if (typeof Axon == "undefined") {
 		// Listen for Axon messages
 		chrome.runtime.onMessage.addListener(
 			(request, sender, sendResponse) => {
-			if (request.type == "config") {
+			if (request.type == "config")
 				me.config = request.value;
-				// // Get the currently active account private key
-				// me.activePrivateKey = "";
-				// for (var p in me.config.accounts) {
-					// var acc = me.config.accounts[p];
-					// if (acc.active && acc.privateKey)
-						// me.activePrivateKey = acc.privateKey;
-				// });
-			}
-			console.log('Received message', request);
 		});
 	}
 
+	/**
+	 *  Ensures that plugin modules are informed when the configuration is ready.
+	 */
 	Axon.handlers = [];
 	Axon.register = function (handler) {
 		this.handlers.push(handler);
 	}
 
 }
+
+/**
+ *  Show the actionIcon as busy for 1/2 second.
+ */
+Axon.prototype.changeIcon = (options)=>{
+	var timeout = (options ? options.timeout : 500);
+	var icon = (options ? options.icon : "assets/bank16_green.png");
+	chrome.runtime.sendMessage({
+		type: 'SetIcon',
+		icon: icon
+	}, ()=>{});
+	
+	setTimeout(() => {
+		chrome.runtime.sendMessage({
+			type: 'SetIcon',
+			icon: "assets/bank16_black.png"
+		}, ()=>{});
+	}, timeout);
+};

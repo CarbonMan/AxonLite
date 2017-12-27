@@ -6,7 +6,8 @@
 	"version": "0.1",
 
 	"browser_action": {
-		"default_icon": "assets/icon.png",
+		/* See https://iconmonstr.com/bank-1/?png */
+		"default_icon": "assets/bank16_black.png",
 		"default_popup": "views/axonSettings.html",
 		"default_title": "Axon Lite"
 	},

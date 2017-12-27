@@ -1,3 +1,8 @@
+/**
+ *  @file Payment.js
+ *  @brief Controls the processing of a payment
+ *  various payment processors can be attached through the axon.financials hook
+ */
 Axon.prototype.PaymentError = function (options) {
 	if (typeof options == "number") {
 		this.type = options;
@@ -17,7 +22,8 @@ Axon.prototype.PaymentError.prototype = new Error;
  */
 Axon.prototype.manualPayment = (opts) => {
 	var p = new Promise((resolve, reject) => {
-			var payment = {
+			// payment is the state object for the pending transaction
+			var payment = axon.financials.payment = {
 				amount: 0
 			};
 			console.log("Send", axon.financials.currency);
@@ -37,7 +43,7 @@ Axon.prototype.manualPayment = (opts) => {
 					// < input class="axonInput" type="text" id="axonPrivateKey" placeholder="Amount..." >  \
 					// <br/>  <br/> ';
 				}
-				var contentBody = (payment.title ? "Send from " + payment.title + "<br/>" : "");
+				var contentBody = axon.financials.popupBody;
 				var content = "Send " + axon.financials.currency + " to " + opts.to +
 					'<br/> \
 					<b>No keys are stored on this computer or on our servers</b><br/> \
@@ -68,6 +74,7 @@ Axon.prototype.manualPayment = (opts) => {
 						alert(axon.i18n("Invalid amount"));
 						return;
 					}
+					axon.financials.preSendTransaction();
 					mB.close();
 					setTimeout(() => {
 						resolve(payment);

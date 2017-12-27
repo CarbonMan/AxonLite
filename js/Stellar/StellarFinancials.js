@@ -1,8 +1,11 @@
 /**
- *  Payment control for the Stellar network
+ *  @file StellarFinancials.js
+ *  @brief Plugin payment control for the Stellar network
  */
 Axon.prototype.Financials = function () {
 	var me = this;
+	// This is the payment state
+	me.payment = {};
 	me.currency = "Lumens";
 	me.showWarning = true;
 	me.networkTitle = "";
@@ -12,6 +15,26 @@ Axon.prototype.Financials = function () {
 	 */
 	me.FIXED_MINIMUM_CHARGE = 0.05;
 	me.FIXED_BASIC_PERCENTAGE = 0.01;
+
+	/**
+	 *  The popup message body is replaceable
+	 */
+	Object.defineProperty(me, 'popupBody', {
+		get: () => {
+			return (me.payment.title ? "Send from " + me.payment.title + "<br/>" : "") +
+			'Memo text (28 characters)<br/> \
+			<input class="axonInput" type="text" id="transactionMemo" placeholder="Memo..." >  \
+			<br/><br/>';
+		}
+	});
+
+	/**
+	 *  Called from payment.js when the transaction popup has been OKed.
+	 *  Put some text into the transaction memo
+	 */
+	me.preSendTransaction = () => {
+		me.payment.memoText = $("#transactionMemo").val() || 'Reddit tip!';
+	};
 
 	/**
 	 *  This is the secret key that should not be made public.
@@ -64,22 +87,36 @@ Axon.prototype.Financials = function () {
 
 	me.calculateFee = function (state) {
 		return new Promise((resolve, reject) => {
-			// var amountStr = prompt("Enter the amount (you will be asked to confirm): ", "the amount");
-			// var gross = parseFloat(amountStr);
-			// if (isNaN(gross) || !gross)
-			// return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
-
 			var fee = state.amount * me.FIXED_BASIC_PERCENTAGE;
 			fee = (fee > me.FIXED_MINIMUM_CHARGE ? fee : me.FIXED_MINIMUM_CHARGE);
 			var net = state.amount + fee;
-			//state.amount = state.gross;
 			state.fee = fee;
-			if (!confirm("Send " + state.amount + " XLM from\n" +
-					"the " + (state.title || "private") + " account to " + state.receiverName + "?\n" +
-					"Transfer fee is " + fee + " XLM"))
+			var content = "Send " + state.amount + " XLM from<br/>" +
+				"the " + (state.title || "private") + " account to " + state.receiverName + "?<br/>" +
+				"Transfer fee is " + fee + " XLM"
+				var contentFooter = '<br/><br/>  \
+				<div style="margin: 0 auto; text-align: center;">  \
+				<button id="axonOK" class="axon_ok_button">PROCEED</button>&nbsp; \
+				<button id="axonClose" class="axon_close_button">CLOSE</button>  \
+				</div> ';
+			var mB = new axon.Modal({
+					title: ' Send a payment on the ' + axon.networkTitle + ' network ',
+					description: content + contentFooter,
+					height: '150',
+					width: '400'
+				});
+			$("#axonClose").click(function () {
+				mB.close();
 				return reject(new axon.PaymentError(axon.enums.USER_CANCELLED));
+			});
 
-			resolve();
+			$("#axonOK").click(function () {
+				mB.close();
+				setTimeout(() => {
+					resolve();
+				}, 0);
+			});
+
 		});
 	};
 
@@ -161,7 +198,7 @@ Axon.prototype.Financials = function () {
 					amount: "" + state.fee
 				}))
 			// Uncomment to add a memo (https://www.stellar.org/developers/learn/concepts/transactions.html)
-			.addMemo(StellarSdk.Memo.text('Reddit tip!'))
+			.addMemo(StellarSdk.Memo.text(me.payment.memoText))
 			.build();
 
 		// Sign this transaction with the secret key
@@ -175,6 +212,10 @@ Axon.prototype.Financials = function () {
 
 		// Submit the transaction to the Horizon server. The Horizon server will then
 		// submit the transaction into the network for us.
+		axon.changeIcon({
+			timeout: 2000,
+			icon: "assets/bank16_greenbackground.png"
+		});
 		return state.server.submitTransaction(transaction)
 		.catch (function (e) {
 			console.log('An error has occured:');
@@ -190,7 +231,7 @@ Axon.prototype.Financials = function () {
 	/**
 	 *  Send a payment to a user
 	 */
-	me.sendPayment = function (options) {
+	me.sendPayment = (options) => {
 		var receiver = options.account;
 		var paymentState = {
 			receiverPublicKey: receiver.key,

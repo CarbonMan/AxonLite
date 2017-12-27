@@ -9,6 +9,7 @@
 console.log("RedditAccounts.js loaded");
 function gatherAccounts(){
 	var accounts = [];
+	axon.changeIcon();
 	$(".comment").each(function(i){ 
 		var name = $(this).attr("data-author");
 		var publicKey = $(this).find(".md p").text();

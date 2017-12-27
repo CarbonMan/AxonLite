@@ -68,6 +68,11 @@ var axon = {
  */
 chrome.runtime.onMessage.addListener(function (request, sender, callback) {
 	switch (request.type) {
+	case 'SetIcon':
+		chrome.browserAction.setIcon({path: request.icon});
+		callback();
+		break;
+		
 	case 'GetContacts':
 		chrome.storage.local.get('contacts', function (entry) {
 			var cts = entry.contacts;
