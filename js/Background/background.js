@@ -68,6 +68,13 @@ var axon = {
  */
 chrome.runtime.onMessage.addListener(function (request, sender, callback) {
 	switch (request.type) {
+	case 'GetFinancials':
+		//http://kaczor.io/articles/injecting-content-with-chrome-extension/
+ chrome.tabs.executeScript(sender.tab.id, {file: "js/Stellar/StellarFinancials.js"}, function() {
+      callback({ done: true });
+    });		
+		break;
+		
 	case 'SetIcon':
 		chrome.browserAction.setIcon({path: request.icon});
 		callback();
@@ -140,6 +147,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, callback) {
 
 	case 'GetConfig':
 		// Request for the current configuration
+		console.log("GetConfig", _config);
 		callback(_config);
 		break;
 	}

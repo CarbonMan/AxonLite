@@ -1,9 +1,9 @@
 //var T$.L10n;
 var axon;
-$(function(){
-	axon = new Axon();
-	$("#currentAccount").html(axon.i18n("No active account"));
-});
+//$(function () {
+	//axon = new Axon();
+	//$("#currentAccount").html(axon.i18n("No active account"));
+//});
 
 document.addEventListener('DOMContentLoaded', () => {
 	$('.menu .item').tab();
@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 		$("#accountName").val("");
 	});
+	axon = new Axon();
+	$("#currentAccount").html(axon.i18n("No active account"));
 });
 
 function generateTab(settings) {
@@ -52,7 +54,7 @@ function generateTab(settings) {
 	content.insertBefore("#closeBtn");
 	// The content must have loaded prior to creating the tab.
 	tab.tab({
-		'onVisible':function(){
+		'onVisible': function () {
 			// This is now the active account
 			var acc = axon.config.accounts[settings.id];
 			acc.active = true;
@@ -77,7 +79,7 @@ function generateTab(settings) {
 				key: sk,
 				div: settings.id + '_status'
 			});
-		}else
+		} else
 			alert(axon.i18n("Private key required"));
 	});
 
@@ -99,14 +101,23 @@ function Axon() {
 	var _config;
 	var me = this;
 	me.manifest = {};
-	// Request the latest configuration
-	chrome.runtime.sendMessage({
-		type: "GetConfig"
-	}, function (config) {
-		console.log("getConfig response", config);
-		_config = config;
-		initializeScreen();
-	});
+
+	me.getConfiguration = () => {
+		// Request the latest configuration
+		chrome.runtime.sendMessage({
+			type: "GetConfig"
+		}, function (config) {
+			console.log("getConfig response", config);
+			if (config) {
+				_config = config;
+				initializeScreen();
+			} else {
+				// There was a timing problem. If the user loads Chrome and then immediately clicks
+				// the icon the config object was null, so keep trying until it is retrieved.
+				setTimeout(me.getConfiguration, 500);
+			}
+		});
+	};
 
 	Object.defineProperty(this, "config", {
 		get: function () {
@@ -162,6 +173,7 @@ function Axon() {
 			generateTab(acc);
 		}
 	};
+	me.getConfiguration();
 };
 
 /**
@@ -216,15 +228,15 @@ function initializeScreen() {
 	});
 
 	axon.checkAccountTabs();
-	
+
 	// Get the named sites from the manifest file
-	XHR("../manifest.json", function(manifest){
+	XHR("../manifest.json", function (manifest) {
 		axon.manifest = JSON.parse(manifest);
 		var select = document.getElementsByName("url")[0];
-		if (axon.manifest['content_scripts']){
-			axon.manifest['content_scripts'].forEach( (cs) => {
+		if (axon.manifest['content_scripts']) {
+			axon.manifest['content_scripts'].forEach((cs) => {
 				//console.log(cs);
-				if (cs.name){
+				if (cs.name) {
 					//console.log(cs.name);
 					var option = document.createElement('option');
 					option.text = option.value = cs.name;
@@ -237,15 +249,14 @@ function initializeScreen() {
 	//$(".ui .dropdown").dropdown();
 }
 
-
 // Attempt to pull the manifest.json file
-function XHR(file, callback){
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function(){
-        if(xhr.readyState === 4 && xhr.status === 200){
-            callback(xhr.responseText);
-        }
-    }
-    xhr.open('GET', file, true);
-    xhr.send();
+function XHR(file, callback) {
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState === 4 && xhr.status === 200) {
+			callback(xhr.responseText);
+		}
+	}
+	xhr.open('GET', file, true);
+	xhr.send();
 }

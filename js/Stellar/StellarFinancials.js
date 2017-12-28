@@ -1,6 +1,7 @@
 /**
  *  @file StellarFinancials.js
  *  @brief Plugin payment control for the Stellar network
+ *  This file is requested by background.js according to the wallet.
  */
 Axon.prototype.Financials = function () {
 	var me = this;
@@ -272,6 +273,6 @@ Axon.prototype.Financials = function () {
 
 };
 
-Axon.register(function () {
+//Axon.register(function () {
 	axon.financials = new axon.Financials();
-});
+//});

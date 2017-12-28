@@ -31,6 +31,12 @@ if (typeof Axon == "undefined") {
 				init();
 			});
 			me.fire(me.enums.INITIALIZED);
+			// Get the financial plugin
+			chrome.runtime.sendMessage({
+				type: 'GetFinancials'
+			}, (value) => {
+				console.log("Financials loaded");
+			});
 		});
 
 		// Listen for Axon messages
@@ -54,18 +60,18 @@ if (typeof Axon == "undefined") {
 /**
  *  Show the actionIcon as busy for 1/2 second.
  */
-Axon.prototype.changeIcon = (options)=>{
+Axon.prototype.changeIcon = (options) => {
 	var timeout = (options ? options.timeout : 500);
 	var icon = (options ? options.icon : "assets/bank16_green.png");
 	chrome.runtime.sendMessage({
 		type: 'SetIcon',
 		icon: icon
-	}, ()=>{});
-	
+	}, () => {});
+
 	setTimeout(() => {
 		chrome.runtime.sendMessage({
 			type: 'SetIcon',
 			icon: "assets/bank16_black.png"
-		}, ()=>{});
+		}, () => {});
 	}, timeout);
 };

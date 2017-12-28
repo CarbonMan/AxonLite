@@ -6,7 +6,6 @@
 	"version": "0.1",
 
 	"browser_action": {
-		/* See https://iconmonstr.com/bank-1/?png */
 		"default_icon": "assets/bank16_black.png",
 		"default_popup": "views/axonSettings.html",
 		"default_title": "Axon Lite"
@@ -14,8 +13,11 @@
 
 	"permissions": [
 		"activeTab",
+		"tabs",
 		"storage",
-		"contextMenus"
+		"contextMenus",
+        "http://*/",
+        "https://*/"
 	],
 	"content_scripts": [{
 			"name": "Github",
@@ -52,7 +54,6 @@
 				"js/modalHeader.js",
 				"js/modal.js",
 				"js/Content/Payment.js",
-				"js/Stellar/StellarFinancials.js",
 				"js/Github/GithubPayments.js",
 				"js/Stellar/stellar-sdk.min.js",
 				"js/Content/main.js"
@@ -93,7 +94,6 @@
 				"js/modalHeader.js",
 				"js/modal.js",
 				"js/Content/Payment.js",
-				"js/Stellar/StellarFinancials.js",
 				"js/Reddit/RedditPayments.js",
 				"js/Stellar/stellar-sdk.min.js",
 				"js/Content/main.js"
