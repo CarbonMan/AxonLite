@@ -51,7 +51,7 @@ function generateTab(settings) {
 			'<button id="' + settings.id + '_OpenBtn" class="ui small button" >CONNECT ACCOUNT</button>' +
 			'<button id="' + settings.id + '_DelBtn" class="ui small button" >UNLOAD</button>' +
 			'</div>');
-	content.insertBefore("#closeBtn");
+	content.appendTo("body");
 	// The content must have loaded prior to creating the tab.
 	tab.tab({
 		'onVisible': function () {

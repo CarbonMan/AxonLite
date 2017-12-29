@@ -48,15 +48,16 @@ function applyAccounts() {
 					var giftButton = $('<li>' + a + 'Lumens</li></a>').click(function (event) {
 							var me = this;
 							event.preventDefault();
-							axon.manualPayment({
+							var payment = new axon.Payment();
+							payment.manualPayment({
 								to: name
 							})
-							.then((payment) => {
-								return axon.sendTipFromLink({
-									amount: payment.amount,
+							.then((state) => {
+								return payment.sendTipFromLink({
+									amount: state.amount,
 									element: me,
 									toAccount: account,
-									privateKey: payment.privateKey
+									privateKey: state.privateKey
 								});
 							})
 							.catch (noop);
@@ -69,11 +70,19 @@ function applyAccounts() {
 }
 
 /**
+ *  Called from payment.js when the transaction popup has been OKed.
+ *  Put some text into the transaction memo
+ */
+Axon.prototype.Payment.prototype.preSendTransaction = function(){
+	this.paymentState.memoText = $("#transactionMemo").val() || 'Reddit tip!';
+};
+
+/**
  *  Send a tip from the Lumens hyperlink
  */
-Axon.prototype.sendTipFromLink = function (options) {
+Axon.prototype.Payment.prototype.sendTipFromLink = function (options) {
 	var elm = options.element;
-	return this.financials.sendPayment({
+	return this.sendPayment({
 		account: options.toAccount,
 		privateKey: options.privateKey,
 		amount: options.amount

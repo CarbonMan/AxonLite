@@ -424,7 +424,7 @@ Axon.register( readUserInterface );
  *  Send a tip from the Lumens hyperlink
  */
 Axon.prototype.sendTipFromLink = function (options) {
-	return this.financials.sendPayment(options.toAccount)
+	return axon.sendPayment(options.toAccount)
 	.then(function (state) {
 		// Place a comment that a tip has been given. 
 		var orgComment = $(".js-new-comment-form .write-content textarea")

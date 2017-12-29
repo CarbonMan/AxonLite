@@ -76,7 +76,7 @@ Axon.register( readUserInterface );
  */
 Axon.prototype.sendTipFromLink = function (options) {
 	var elm = options.element;
-	return this.financials.sendPayment(options.toAccount)
+	return axon.sendPayment(options.toAccount)
 	.then(function (state) {
 		// Getting to the FB reply area was
 		// Place a comment that a tip has been given. Have to find the reply textbox
